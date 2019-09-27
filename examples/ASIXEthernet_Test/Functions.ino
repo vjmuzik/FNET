@@ -15,14 +15,47 @@ static void dhcp_cln_callback_updated(fnet_dhcp_cln_desc_t _dhcp_desc, fnet_neti
   struct fnet_dhcp_cln_options current_options;
   fnet_dhcp_cln_get_options(dhcp_desc, &current_options);
   
+  uint8_t *ip = (uint8_t*)&current_options.ip_address.s_addr;
   Serial.print("IPAddress: ");
-  Serial.println((uint32_t)current_options.ip_address.s_addr, HEX);
+  Serial.print((uint8_t)*ip++);
+  Serial.print(".");
+  Serial.print((uint8_t)*ip++);
+  Serial.print(".");
+  Serial.print((uint8_t)*ip++);
+  Serial.print(".");
+  Serial.println((uint8_t)*ip);
+
+  ip = (uint8_t*)&current_options.netmask.s_addr;
   Serial.print("SubnetMask: ");
-  Serial.println((uint32_t)current_options.netmask.s_addr, HEX);
+  Serial.print((uint8_t)*ip++);
+  Serial.print(".");
+  Serial.print((uint8_t)*ip++);
+  Serial.print(".");
+  Serial.print((uint8_t)*ip++);
+  Serial.print(".");
+  Serial.println((uint8_t)*ip);
+
+  ip = (uint8_t*)&current_options.gateway.s_addr;
   Serial.print("Gateway: ");
-  Serial.println((uint32_t)current_options.gateway.s_addr, HEX);
+  Serial.print((uint8_t)*ip++);
+  Serial.print(".");
+  Serial.print((uint8_t)*ip++);
+  Serial.print(".");
+  Serial.print((uint8_t)*ip++);
+  Serial.print(".");
+  Serial.println((uint8_t)*ip);
+
+  ip = (uint8_t*)&current_options.dhcp_server.s_addr;
   Serial.print("DHCPServer: ");
-  Serial.println((uint32_t)current_options.dhcp_server.s_addr, HEX);
+  Serial.print((uint8_t)*ip++);
+  Serial.print(".");
+  Serial.print((uint8_t)*ip++);
+  Serial.print(".");
+  Serial.print((uint8_t)*ip++);
+  Serial.print(".");
+  Serial.println((uint8_t)*ip);
+
+  
   Serial.print("State: ");
   Serial.println(fnet_dhcp_cln_get_state(_dhcp_desc));
   Serial.println();
