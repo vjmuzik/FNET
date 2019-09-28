@@ -1,4 +1,4 @@
-//#define STATS  //Print how many times each thread loops per second
+#define STATS  //Print how many times each thread loops per second
 
 #include <USBHost_t36.h> //USB Host Driver
 #include <ASIXEthernet.h> //USB Ethernet Driver
@@ -31,6 +31,7 @@ static fnet_time_t timer_get_ms(void){ //Used for multi-thread version
 fnet_dhcp_cln_params_t dhcp_params; //DHCP intialization parameters
 fnet_dhcp_cln_desc_t dhcp_desc; //DHCP object
 fnet_netif_desc_t current_netif; //Network interface, USB Ethernet
+static fnet_uint8_t         stack_heap[(30U * 1024U)];
 
 void setup() {
   Serial.begin(115200);
@@ -54,7 +55,6 @@ void setup() {
   setHandlePHYWrite(handlePHYWrite);
   setHandleMulticastLeave(handleMulticastLeave);
   setHandleMulticastJoin(handleMulticastJoin);
-  static fnet_uint8_t         stack_heap[(30U * 1024U)];
   struct fnet_init_params     init_params;
   
   static const fnet_timer_api_t timer_api = { //Setup multi-thread timer
@@ -101,16 +101,18 @@ void setup() {
 }
 
 void loop() {
+  while(1){
 #ifdef STATS
-  Looped++;
-  if(advertise >= 1000) {
-    advertise -= 1000;
-    Serial.print("Looped: ");
-    Serial.println(Looped);
-    Serial.print("LoopedUSB: ");
-    Serial.println(LoopedUSB);
-    Looped = 0;
-    LoopedUSB = 0;
-  }
+    Looped++;
+    if(advertise >= 1000) {
+      advertise -= 1000;
+      Serial.print("Looped: ");
+      Serial.println(Looped);
+      Serial.print("LoopedUSB: ");
+      Serial.println(LoopedUSB);
+      Looped = 0;
+      LoopedUSB = 0;
+    }
 #endif
+  }
 }

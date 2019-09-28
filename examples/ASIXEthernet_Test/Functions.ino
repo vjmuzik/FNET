@@ -1,5 +1,7 @@
+#define HACKED
 
 void usbthread() {
+  uint32_t cc = 0;
   while(1) {
     myusb.Task();
     asix1.read();
@@ -7,6 +9,13 @@ void usbthread() {
     fnet_service_poll();
     #ifdef STATS
     LoopedUSB++;
+    #endif
+    #ifdef HACKED
+    cc++;
+    if ( cc > 20 ) {
+      cc=0; //Runs roughly 2 times per millisecond on T3.6
+      threads.yield();
+    }
     #endif
   }
 }
