@@ -71,48 +71,67 @@ void handleOutput(fnet_netif_t *netif, fnet_netbuf_t *nb) { //Called when a mess
         _fnet_netbuf_to_buf(nb, 0u, FNET_NETBUF_COPYALL, sbuf);
     }
   uint8_t* p = sbuf;
-//  p += 4;
-//  Serial.print("Message Transmitted: ");
-//  Serial.println(nb->total_length);
-//  const uint8_t* end = p + nb->total_length;
-//  while(p < end){
-//    if(*p <= 0x0F) Serial.print("0");
-//    Serial.print(*p++, HEX);
-//    Serial.print(" ");
+
+//  if(nb->total_length >= 128){
+//    Serial.print("Message Transmitted: ");
+//    Serial.println(nb->total_length);
+//    const uint8_t* end = p + nb->total_length;
+//    while(p < end){
+//      if(*p <= 0x0F) Serial.print("0");
+//      Serial.print(*p++, HEX);
+//      Serial.print(" ");
+//    }
+//    Serial.println();
 //  }
-//  Serial.println();
 //  p = sbuf;
   asix1.sendPacket(p, nb->total_length);
 }
 
+int32_t _totalLength;
+uint8_t* _lastIndex;
+const uint8_t _modLength[4] = {0,3,2,1};
+uint8_t* _rxEnd;
+
 void handleRecieve(const uint8_t* data, uint16_t length) { //Called when ASIX gets a message
-  uint8_t* p = rbuf;
-  const uint8_t* end = data + length;
-  length = (data[1] << 8) | data[0];
-  data += 6;
-//  Serial.print("Message Recieved: ");
-  while(data < end){
-    *p = *data;
-    data++;
-//    if(*p <= 0x0F) Serial.print("0");
-//    Serial.print(*p, HEX);
-//    Serial.print(" ");
-    p++;
+  if(length == 0) return;
+  if(((data[0] + data[2]) == 0xFF) && ((data[1] + data[3]) == 0xFF)) { //Check for header
+    _lastIndex = rbuf;
+    const uint8_t* end = data + length;
+    _totalLength = (data[1] << 8) | data[0];
+    _rxEnd = rbuf + _totalLength;
+    data += 6;
+    while(data < end){
+      *_lastIndex = *data;
+      data++;
+      _lastIndex++;
+    }
   }
-//  Serial.println();
-//  if(rbuf[6] == 0x90) {
+  else if(_lastIndex <= _rxEnd){
+    const uint8_t* end = data + length;
+    while(data < end){
+      *_lastIndex = *data;
+      data++;
+      _lastIndex++;
+    }
+  }
+
+//  if(_lastIndex >= _rxEnd) {
 //    Serial.print("Length: ");
-//    Serial.println(length);
+//    Serial.println(_totalLength);
 //    Serial.print("Message Recieved: ");
-//    for(uint16_t i = 0; i < length; i++){
+//    for(uint16_t i = 0; i < _totalLength; i++){
 //      if(rbuf[i] <= 0x0F) Serial.print("0");
 //      Serial.print(rbuf[i], HEX);
 //      Serial.print(" ");
 //    }
 //    Serial.println();
 //  }
-  
-  _fnet_eth_input(&fnet_eth0_if, rbuf, length);
+//  Serial.println();
+//  Serial.println();
+  if(_lastIndex >= _rxEnd) {
+//    Serial.println("Stack recieved");
+    _fnet_eth_input(&fnet_eth0_if, rbuf, _totalLength);
+  }
 }
 
 void handleSetMACAddress(uint8_t * hw_addr) { //Gets calls on initialization
