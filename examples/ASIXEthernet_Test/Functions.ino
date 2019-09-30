@@ -102,6 +102,7 @@ void checkLink(){
              fnet_dhcp_cln_set_callback_updated(dhcp_desc, dhcp_cln_callback_updated, (void*)dhcp_desc);
              fnet_dhcp_cln_set_callback_discover(dhcp_desc, dhcp_cln_callback_updated, (void*)dhcp_desc);
              Serial.println("DHCP initialization done!");
+             bench_srv_init();
           }
           else{
             Serial.println("ERROR: DHCP initialization failed!");
@@ -111,6 +112,7 @@ void checkLink(){
     Serial.println("DHCP Released");
     fnet_dhcp_cln_release(dhcp_desc);
     fnet_memset_zero(dhcp_desc, sizeof(dhcp_desc));
+    bench_srv_release();
   }
   else if(!asix1.connected){
 //    Serial.println("DHCP already released!");
@@ -243,4 +245,46 @@ void handleMulticastLeave(fnet_netif_t *netif, fnet_mac_addr_t multicast_addr) {
 
 fnet_bool_t handleIsConnected() {
   return asix1.connected ? FNET_TRUE : FNET_FALSE;
+}
+
+fnet_bench_srv_params_t bench_srv_params;
+fnet_bench_srv_desc_t bench_srv_desc;
+void bench_srv_init(){
+    /* Set Benchmark server parameters.*/
+    fnet_memset_zero(&bench_srv_params, sizeof(bench_srv_params));
+    bench_srv_params.type = SOCK_STREAM; /* TCP by default */
+        if(current_netif){ /* Only on one interface */
+            bench_srv_params.address.sa_scope_id = fnet_netif_get_scope_id(current_netif);
+        }
+
+        /* Start Benchmark server. */
+        bench_srv_desc = fnet_bench_srv_init(&bench_srv_params);
+        if(bench_srv_desc){
+            /* Instal callbacks */
+//            fnet_bench_srv_set_callback_session_begin (fapp_bench_srv_desc, fapp_bench_srv_callback_session_begin, shell_desc);
+            fnet_bench_srv_set_callback_session_end (bench_srv_desc, bench_srv_callback_session_end, bench_srv_desc);
+        }
+}
+
+void bench_srv_release(void){
+    fnet_bench_srv_release(bench_srv_desc);
+    bench_srv_desc = 0;
+}
+
+static void bench_srv_callback_session_end(fnet_bench_srv_desc_t desc, const struct fnet_bench_srv_result *bench_srv_result, void *cookie)
+{
+  if(bench_srv_result){
+    Serial.println("Benchmark results:");
+    Serial.print("Megabytes: ");
+    Serial.println(bench_srv_result->megabytes);
+    Serial.print("Bytes: ");
+    Serial.println(bench_srv_result->bytes);
+    Serial.print("Seconds: ");
+    Serial.println(bench_srv_result->time_ms/1000.0, 4);
+    Serial.print("Bytes/Sec: ");
+    Serial.println(bench_srv_result->bytes/(bench_srv_result->time_ms/1000.0), 4);
+    Serial.print("KBytes/Sec: ");
+    Serial.println((bench_srv_result->bytes/(bench_srv_result->time_ms/1000.0))/1000.0, 4);
+    Serial.println();
+  }
 }
