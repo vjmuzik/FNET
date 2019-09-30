@@ -1,4 +1,4 @@
-//#define STATS  //Print how many times each thread loops per second
+#define STATS  //Print how many times each thread loops per second
 
 #include <USBHost_t36.h> //USB Host Driver
 #include <ASIXEthernet.h> //USB Ethernet Driver
@@ -12,7 +12,7 @@ USBHub hub1(myusb);
 USBHub hub2(myusb);
 ASIXEthernet asix1(myusb);
 
-volatile uint8_t rbuf[2500]; // recieve buffer
+volatile uint8_t rbuf[512*32]; // recieve buffer
 volatile uint8_t sbuf[2500]; // send buffer
 volatile uint16_t sbuflen; // length of data to send
 uint8_t MacAddress[6] = {0x00,0x50,0xB6,0xBE,0x8B,0xB4}; //Not setup yet, but can't be 0

@@ -9,6 +9,7 @@
 #include <Arduino.h>
 #define FNET_CFG_MULTITHREADING (1)
 #define FNET_CFG_BENCH_SRV (1)  //Benchmark
+#define FNET_CFG_BENCH_SRV_BUFFER_SIZE          (8*1024)
 /*********************************************************************
  *
  * The basic data types.

@@ -23,7 +23,7 @@ void usbthread() {
     #endif
     #ifdef HACKED
     cc++;
-    if ( cc > 20 ) {
+    if ( cc > 40 ) {
       cc=0;
       threads.yield();
     }
@@ -144,12 +144,14 @@ void handleOutput(fnet_netif_t *netif, fnet_netbuf_t *nb) { //Called when a mess
 int32_t _totalLength;
 uint8_t* _lastIndex;
 uint8_t* _rxEnd;
+uint8_t* _rxStart;
 void handleRecieve(const uint8_t* data, uint16_t length) { //Called when ASIX gets a message
   if(length == 0) return;
+  RECIEVE:
   if(((data[0] + data[2]) == 0xFF) && ((data[1] + data[3]) == 0xFF)) { //Check for header
     _lastIndex = (uint8_t*)rbuf;
-    const uint8_t* end = data + length;
     _totalLength = (data[1] << 8) | data[0];
+    const uint8_t* end = data + (((_totalLength + 6) <= length) ? _totalLength+6 : length);
     _rxEnd = (uint8_t*)rbuf + _totalLength;
     data += 6;
     while(data < end){
@@ -167,9 +169,13 @@ void handleRecieve(const uint8_t* data, uint16_t length) { //Called when ASIX ge
     }
   }
 
-//  if(_lastIndex >= _rxEnd && _totalLength > 100) {
+  if(_lastIndex >= _rxEnd && _totalLength > 1000) {
 //    Serial.print("Length: ");
 //    Serial.println(_totalLength);
+//    Serial.print("LastUSBLength: ");
+//    Serial.println(length);
+//    Serial.print("LengthRemaining: ");
+//    Serial.println(length-_totalLength-6);
 //    Serial.print("Message Recieved: ");
 //    for(uint16_t i = 0; i < _totalLength; i++){
 //      if(rbuf[i] <= 0x0F) Serial.print("0");
@@ -177,12 +183,19 @@ void handleRecieve(const uint8_t* data, uint16_t length) { //Called when ASIX ge
 //      Serial.print(" ");
 //    }
 //    Serial.println();
-//  }
+//    Serial.println();
+  }
 //  Serial.println();
 //  Serial.println();
   if(_lastIndex >= _rxEnd) {
-//    Serial.println("Stack recieved");
     _fnet_eth_input(&fnet_eth0_if, (uint8_t*)rbuf, _totalLength);
+    if((length-_totalLength-6) > 3){
+//      Serial.println("Recieve Looped");
+      length -= (_totalLength + 6);
+      goto RECIEVE;
+//        Serial.println();
+    }
+//    Serial.println();
   }
 }
 
@@ -274,17 +287,20 @@ void bench_srv_release(void){
 static void bench_srv_callback_session_end(fnet_bench_srv_desc_t desc, const struct fnet_bench_srv_result *bench_srv_result, void *cookie)
 {
   if(bench_srv_result){
+    uint64_t totalBytes = (bench_srv_result->megabytes * 1000000) + bench_srv_result->bytes;
     Serial.println("Benchmark results:");
     Serial.print("Megabytes: ");
-    Serial.println(bench_srv_result->megabytes);
-    Serial.print("Bytes: ");
+    Serial.print(bench_srv_result->megabytes);
+    Serial.print(".");
     Serial.println(bench_srv_result->bytes);
     Serial.print("Seconds: ");
     Serial.println(bench_srv_result->time_ms/1000.0, 4);
     Serial.print("Bytes/Sec: ");
-    Serial.println(bench_srv_result->bytes/(bench_srv_result->time_ms/1000.0), 4);
+    Serial.println(totalBytes/(bench_srv_result->time_ms/1000.0), 4);
     Serial.print("KBytes/Sec: ");
-    Serial.println((bench_srv_result->bytes/(bench_srv_result->time_ms/1000.0))/1000.0, 4);
+    Serial.println((totalBytes/(bench_srv_result->time_ms/1000.0))/1000.0, 4);
+    Serial.print("KBits/Sec: ");
+    Serial.println((((totalBytes/(bench_srv_result->time_ms/1000.0))/1000.0)*8), 4);
     Serial.println();
   }
 }
