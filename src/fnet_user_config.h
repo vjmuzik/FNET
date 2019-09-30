@@ -7,6 +7,7 @@
 
 #define _FNET_USER_CONFIG_H_
 #include <Arduino.h>
+#define FNET_CFG_MULTITHREADING (1)      //Can't properly support until TeensyThreads has recursive mutex capabilities
 /*********************************************************************
  *
  * The basic data types.

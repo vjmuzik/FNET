@@ -74,6 +74,10 @@ fnet_return_t fnet_usb_get_statistics(struct fnet_netif *netif, struct fnet_neti
     return FNET_OK;
 }
 
+fnet_bool_t fnet_usb_is_connected(fnet_netif_t *netif){
+    return _handleIsConnected();
+}
+
 /************************************************************************
  * NAME: fnet_usb_output
  *
@@ -210,7 +214,7 @@ const fnet_netif_api_t fnet_usb_mac_api = {
     .netif_drain = _fnet_eth_drain,                      /* Drain function.*/
     .netif_get_hw_addr = fnet_usb_get_hw_addr,
     .netif_set_hw_addr = fnet_usb_set_hw_addr,
-    .netif_is_connected = _fnet_eth_is_connected,
+    .netif_is_connected = fnet_usb_is_connected,
     .netif_get_statistics = fnet_usb_get_statistics,
 #if FNET_CFG_MULTICAST
 #if FNET_CFG_IP4

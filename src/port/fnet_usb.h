@@ -29,7 +29,7 @@ void fnet_usb_release(fnet_netif_t *netif);
 
 fnet_return_t fnet_usb_get_hw_addr(fnet_netif_t *netif, uint8_t * hw_addr);
 fnet_return_t fnet_usb_set_hw_addr(fnet_netif_t *netif, uint8_t * hw_addr);
-fnet_return_t fnet_usb_is_connected(fnet_netif_t *netif);
+fnet_bool_t fnet_usb_is_connected(fnet_netif_t *netif);
 fnet_return_t fnet_usb_get_statistics(struct fnet_netif *netif, struct fnet_netif_statistics * statistics);
 void fnet_usb_eth_output(fnet_netif_t *netif, fnet_netbuf_t *nb);
 
@@ -81,8 +81,13 @@ void (*_handleStatistics)(struct fnet_netif *netif, struct fnet_netif_statistics
 void setHandleStatistics(void (*fptr)(struct fnet_netif *netif, struct fnet_netif_statistics * statistics)) {
     _handleStatistics = fptr;
 };
+fnet_bool_t (*_handleIsConnected)();
+void setHandleIsConnected(fnet_bool_t (*fptr)()) {
+    _handleIsConnected = fptr;
+};
 extern fnet_netif_t fnet_eth0_if;
 #define FNET_CPU_ETH0_IF ((fnet_netif_desc_t)(&fnet_eth0_if))
+#define FNET_CPU_DATA_MEMORY_BARRIER    FNET_COMP_ASM("DMB")
 fnet_netif_t * fnet_usb_get_netif();
 
 
