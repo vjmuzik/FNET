@@ -168,7 +168,10 @@ void handleRecieve(const uint8_t* data, uint32_t length) { //Called when ASIX ge
       _lastIndex++;
     }
   }
-
+  else{ //Error
+    Serial.println("Message Recieve Error");
+    return;
+  }
   if(_lastIndex >= _rxEnd && _totalLength > 1000) {
 //    Serial.print("Length: ");
 //    Serial.println(_totalLength);
@@ -188,6 +191,7 @@ void handleRecieve(const uint8_t* data, uint32_t length) { //Called when ASIX ge
 //  Serial.println();
 //  Serial.println();
   if(_lastIndex >= _rxEnd) {
+//    Serial.println("Recieved");
     _fnet_eth_input(&fnet_eth0_if, (uint8_t*)rbuf, _totalLength);
     if((length-_totalLength-6) > 3){
 //      Serial.println("Recieve Looped");

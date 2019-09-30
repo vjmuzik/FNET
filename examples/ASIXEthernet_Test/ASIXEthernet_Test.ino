@@ -1,4 +1,4 @@
-#define STATS  //Print how many times each thread loops per second
+//#define STATS  //Print how many times each thread loops per second
 
 #include <USBHost_t36.h> //USB Host Driver
 #include <ASIXEthernet.h> //USB Ethernet Driver
