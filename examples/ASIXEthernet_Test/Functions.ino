@@ -141,11 +141,11 @@ void handleOutput(fnet_netif_t *netif, fnet_netbuf_t *nb) { //Called when a mess
   }
 }
 
-int32_t _totalLength;
+uint32_t _totalLength;
 uint8_t* _lastIndex;
 uint8_t* _rxEnd;
 uint8_t* _rxStart;
-void handleRecieve(const uint8_t* data, uint16_t length) { //Called when ASIX gets a message
+void handleRecieve(const uint8_t* data, uint32_t length) { //Called when ASIX gets a message
   if(length == 0) return;
   RECIEVE:
   if(((data[0] + data[2]) == 0xFF) && ((data[1] + data[3]) == 0xFF)) { //Check for header

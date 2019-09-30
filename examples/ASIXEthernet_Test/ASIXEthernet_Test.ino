@@ -12,7 +12,7 @@ USBHub hub1(myusb);
 USBHub hub2(myusb);
 ASIXEthernet asix1(myusb);
 
-volatile uint8_t rbuf[512*32]; // recieve buffer
+volatile uint8_t rbuf[512*64]; // recieve buffer
 volatile uint8_t sbuf[2500]; // send buffer
 volatile uint16_t sbuflen; // length of data to send
 uint8_t MacAddress[6] = {0x00,0x50,0xB6,0xBE,0x8B,0xB4}; //Not setup yet, but can't be 0
@@ -98,7 +98,7 @@ fnet_time_t timer_get_ms(void){ //Used for multi-thread version
 fnet_dhcp_cln_params_t dhcp_params; //DHCP intialization parameters
 fnet_dhcp_cln_desc_t dhcp_desc; //DHCP object
 fnet_netif_desc_t current_netif; //Network interface, USB Ethernet
-static fnet_uint8_t         stack_heap[(30U * 1024U)];
+static fnet_uint8_t         stack_heap[(48U * 1024U)];
 
 void setup() {
   Serial.begin(115200);
