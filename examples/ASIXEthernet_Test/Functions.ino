@@ -168,8 +168,17 @@ void handleRecieve(const uint8_t* data, uint32_t length) { //Called when ASIX ge
       _lastIndex++;
     }
   }
-  else{ //Error
-    Serial.println("Message Recieve Error");
+  else{ //Error edgecase unknown cause
+    const uint8_t* end = data + length;
+    Serial.println("Message Recieve Error, searching for next header");
+    while(data < end){
+      data++;
+      if(((data[0] + data[2]) == 0xFF) && ((data[1] + data[3]) == 0xFF)) { //Check for header
+        Serial.println("Header found!");
+        goto RECIEVE;
+      }
+    }
+    Serial.println("Error: No new header found");
     return;
   }
   if(_lastIndex >= _rxEnd && _totalLength > 1000) {
