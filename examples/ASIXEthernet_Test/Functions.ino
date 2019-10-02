@@ -23,7 +23,7 @@ void usbthread() {
     #endif
     #ifdef HACKED
     cc++;
-    if ( cc > 40 ) {
+    if ( cc > 20 ) {
       cc=0;
       threads.yield();
     }
@@ -145,10 +145,11 @@ uint32_t _totalLength;
 uint8_t* _lastIndex;
 uint8_t* _rxEnd;
 uint8_t* _rxStart;
+const uint8_t _packetBound[4] = {0,3,2,1};
 void handleRecieve(const uint8_t* data, uint32_t length) { //Called when ASIX gets a message
   if(length == 0) return;
   RECIEVE:
-  if(((data[0] + data[2]) == 0xFF) && ((data[1] + data[3]) == 0xFF)) { //Check for header
+  if(((data[0] | data[2]) == 0xFF) && ((data[1] | data[3]) == 0xFF)) { //Check for header
     _lastIndex = (uint8_t*)rbuf;
     _totalLength = (data[1] << 8) | data[0];
     const uint8_t* end = data + (((_totalLength + 6) <= length) ? _totalLength+6 : length);
@@ -170,15 +171,22 @@ void handleRecieve(const uint8_t* data, uint32_t length) { //Called when ASIX ge
   }
   else{ //Error edgecase unknown cause
     const uint8_t* end = data + length;
-    Serial.println("Message Recieve Error, searching for next header");
+//    Serial.println("Message Recieve Error, searching for next header");
+//    Serial.print("length: ");
+//    Serial.println(length);
+//    Serial.print("Message: ");
     while(data < end){
       data++;
-      if(((data[0] + data[2]) == 0xFF) && ((data[1] + data[3]) == 0xFF)) { //Check for header
-        Serial.println("Header found!");
+//      if(*data <= 0x0F) Serial.print("0");
+//      Serial.print(*data, HEX);
+//      Serial.print(" ");
+      if(((data[0] | data[2]) == 0xFF) && ((data[1] | data[3]) == 0xFF)) { //Check for header
+//        Serial.println("Header found!");
         goto RECIEVE;
       }
     }
-    Serial.println("Error: No new header found");
+//    Serial.println();
+//    Serial.println("Error: No new header found");
     return;
   }
   if(_lastIndex >= _rxEnd && _totalLength > 1000) {
@@ -202,9 +210,9 @@ void handleRecieve(const uint8_t* data, uint32_t length) { //Called when ASIX ge
   if(_lastIndex >= _rxEnd) {
 //    Serial.println("Recieved");
     _fnet_eth_input(&fnet_eth0_if, (uint8_t*)rbuf, _totalLength);
-    if((length-_totalLength-6) > 3){
+    if((length-_totalLength-6) > 3 && (length-_totalLength-6) < 4294965840){
 //      Serial.println("Recieve Looped");
-      length -= (_totalLength + 6);
+      length -= (_totalLength + 6 + _packetBound[(_totalLength + 6) % 4]);
       goto RECIEVE;
 //        Serial.println();
     }
@@ -297,8 +305,7 @@ void bench_srv_release(void){
     bench_srv_desc = 0;
 }
 
-static void bench_srv_callback_session_end(fnet_bench_srv_desc_t desc, const struct fnet_bench_srv_result *bench_srv_result, void *cookie)
-{
+static void bench_srv_callback_session_end(fnet_bench_srv_desc_t desc, const struct fnet_bench_srv_result *bench_srv_result, void *cookie) {
   if(bench_srv_result){
     uint64_t totalBytes = (bench_srv_result->megabytes * 1000000) + bench_srv_result->bytes;
     Serial.println("Benchmark results:");

@@ -1,4 +1,4 @@
-//#define STATS  //Print how many times each thread loops per second
+#define STATS  //Print how many times each thread loops per second
 
 #include <USBHost_t36.h> //USB Host Driver
 #include <ASIXEthernet.h> //USB Ethernet Driver
@@ -12,8 +12,8 @@ USBHub hub1(myusb);
 USBHub hub2(myusb);
 ASIXEthernet asix1(myusb);
 
-volatile uint8_t rbuf[512*64]; // recieve buffer
-volatile uint8_t sbuf[2500]; // send buffer
+volatile uint8_t rbuf[16384]; // recieve buffer
+volatile uint8_t sbuf[2000]; // send buffer
 volatile uint16_t sbuflen; // length of data to send
 uint8_t MacAddress[6] = {0x00,0x50,0xB6,0xBE,0x8B,0xB4}; //Not setup yet, but can't be 0
                                           //Uses your adapters builtin address right now
@@ -111,6 +111,7 @@ void setup() {
   myusb.begin();
   asix1.setHandleRecieve(handleRecieve);
   Serial.println("USB Ready");
+//  threads.addThread(usbpoll);
   threads.addThread(usbthread);
   //All of these have to be set to function correctly
   setHandleOutput(handleOutput);
@@ -158,14 +159,20 @@ void setup() {
 
 void loop() {
   while(1){
+    myusb.Task();
+    asix1.read();
 #ifdef STATS
     Looped++;
     if(advertise >= 1000) {
       advertise -= 1000;
       Serial.print("Looped: ");
-      Serial.println(Looped);
-      Serial.print("LoopedUSB: ");
-      Serial.println(LoopedUSB);
+      Serial.print(Looped);
+      Serial.print("  LoopedUSB: ");
+      Serial.print(LoopedUSB);
+      Serial.print("  FNETMemFree: ");
+      Serial.print((uint32_t)fnet_free_mem_status());
+      Serial.print("  LinkSpeed: ");
+      Serial.println(asix1.PHYSpeed ? "100BASE" : "10BASE");
       Looped = 0;
       LoopedUSB = 0;
     }
