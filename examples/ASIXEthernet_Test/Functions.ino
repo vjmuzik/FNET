@@ -2,22 +2,14 @@
 
 void usbthread() {
   uint32_t cc = 0;
-  elapsedMillis checkTimer;
   while(1) {
     myusb.Task();
     asix1.read();
+    checkLink();
     if(fnet_netif_is_initialized(current_netif)){
       fnet_poll();
       fnet_service_poll();
-      if(checkTimer >= 1000) {
-        checkTimer -= 1000;
-        checkLink();
-      }
     }
-    else{
-      checkTimer = 0;
-    }
-    
     #ifdef STATS
     LoopedUSB++;
     #endif
@@ -89,10 +81,33 @@ void checkLink(){
 //  Serial.print("Link: ");
 //  Serial.println(asix1.connected);
   if(asix1.connected && fnet_dhcp_cln_is_enabled(dhcp_desc)){
-    //Serial.println("DHCP already running!");
+//    Serial.println("DHCP already running!");
   }
   else if(asix1.connected){
-    Serial.println("Initializing DHCP");
+    struct fnet_init_params     init_params;
+  
+    static const fnet_timer_api_t timer_api = { //Setup multi-thread timer
+      .timer_get_ms = timer_get_ms,
+      .timer_delay = 0,
+    };
+    /* Input parameters for FNET stack initialization */
+    init_params.netheap_ptr = stack_heap;
+    init_params.netheap_size = sizeof(stack_heap);
+    init_params.mutex_api = &teensy_mutex_api;
+    init_params.timer_api = &timer_api;
+    /* FNET Initialization */
+    if (fnet_init(&init_params) != FNET_ERR) {
+      Serial.println("TCP/IP stack initialization is done.\n");
+      /* You may use FNET stack API */
+      /* Initialize networking interfaces using fnet_netif_init(). */
+//        Get current net interface.
+      if(fnet_netif_init(FNET_CPU_ETH0_IF, MacAddress, 6) != FNET_ERR){
+        Serial.println("netif Initialized");
+        if((current_netif = fnet_netif_get_default()) == 0){
+          Serial.println("ERROR: Network Interface is not configurated!");
+        }
+        else {
+          Serial.println("Initializing DHCP");
           fnet_memset_zero(&dhcp_desc, sizeof(dhcp_desc));
           fnet_memset_zero(&dhcp_params, sizeof(dhcp_params));
           dhcp_params.netif = current_netif;
@@ -107,12 +122,22 @@ void checkLink(){
           else{
             Serial.println("ERROR: DHCP initialization failed!");
           }
+        }
+      }
+      else {
+        Serial.println("Error:netif initialization failed.\n");
+      }
+  }
+    else {
+      Serial.println("Error:TCP/IP stack initialization failed.\n");
+    }
   }
   else if(!asix1.connected && fnet_dhcp_cln_is_enabled(dhcp_desc)){
     Serial.println("DHCP Released");
     fnet_dhcp_cln_release(dhcp_desc);
     fnet_memset_zero(dhcp_desc, sizeof(dhcp_desc));
     bench_srv_release();
+    fnet_release();
   }
   else if(!asix1.connected){
 //    Serial.println("DHCP already released!");
@@ -171,22 +196,23 @@ void handleRecieve(const uint8_t* data, uint32_t length) { //Called when ASIX ge
   }
   else{ //Error edgecase unknown cause
     const uint8_t* end = data + length;
-//    Serial.println("Message Recieve Error, searching for next header");
-//    Serial.print("length: ");
-//    Serial.println(length);
-//    Serial.print("Message: ");
+    Serial.println("Message Recieve Error, searching for next header");
+    Serial.print("length: ");
+    Serial.println(length);
+    Serial.print("Message: ");
     while(data < end){
       data++;
-//      if(*data <= 0x0F) Serial.print("0");
-//      Serial.print(*data, HEX);
-//      Serial.print(" ");
+      if(*data <= 0x0F) Serial.print("0");
+      Serial.print(*data, HEX);
+      Serial.print(" ");
       if(((data[0] | data[2]) == 0xFF) && ((data[1] | data[3]) == 0xFF)) { //Check for header
-//        Serial.println("Header found!");
+        Serial.println();
+        Serial.println("Header found!");
         goto RECIEVE;
       }
     }
-//    Serial.println();
-//    Serial.println("Error: No new header found");
+    Serial.println();
+    Serial.println("Error: No new header found");
     return;
   }
   if(_lastIndex >= _rxEnd && _totalLength > 1000) {
@@ -257,6 +283,7 @@ void handlePHYWrite(fnet_uint32_t reg_addr, fnet_uint16_t data) { //Could be cal
   Serial.println("PHYWrite");
 }
 
+uint8_t mcHashTable[8] = {0,0,0,0,0,0,0,0}; //Whole table needs resent when one multicast address is changed
 void handleMulticastJoin(fnet_netif_t *netif, fnet_mac_addr_t multicast_addr) { //Called when joining multicast group
   //Not setup yet
   Serial.print("MulticastJoin: ");
@@ -265,6 +292,14 @@ void handleMulticastJoin(fnet_netif_t *netif, fnet_mac_addr_t multicast_addr) { 
     Serial.print(multicast_addr[i], HEX);
   }
   Serial.println();
+  uint8_t crc = (uint8_t)(fnet_usb_crc_hash(multicast_addr) >> 26);
+  crc &= 0x3F;
+  mcHashTable[crc >> 3] |= 1 << (crc & 7);
+  asix1.setMulticast((uint8_t*)&mcHashTable);
+  Serial.println("MulticastTable: ");
+  for(uint8_t i = 0; i < 8; i++) {
+    Serial.println(mcHashTable[i],BIN);
+  }
 }
 
 void handleMulticastLeave(fnet_netif_t *netif, fnet_mac_addr_t multicast_addr) { //Called when leaving multicast group
@@ -275,6 +310,14 @@ void handleMulticastLeave(fnet_netif_t *netif, fnet_mac_addr_t multicast_addr) {
     Serial.print(multicast_addr[i], HEX);
   }
   Serial.println();
+  uint8_t crc = (uint8_t)(fnet_usb_crc_hash(multicast_addr) >> 26);
+  crc &= 0x3F;
+  mcHashTable[crc >> 3] ^= 1 << (crc & 7);
+  asix1.setMulticast((uint8_t*)&mcHashTable);
+  Serial.println("MulticastTable: ");
+  for(uint8_t i = 0; i < 8; i++) {
+    Serial.println(mcHashTable[i],BIN);
+  }
 }
 
 fnet_bool_t handleIsConnected() {
@@ -308,19 +351,197 @@ void bench_srv_release(void){
 static void bench_srv_callback_session_end(fnet_bench_srv_desc_t desc, const struct fnet_bench_srv_result *bench_srv_result, void *cookie) {
   if(bench_srv_result){
     uint64_t totalBytes = (bench_srv_result->megabytes * 1000000) + bench_srv_result->bytes;
-    Serial.println("Benchmark results:");
+//    Serial.println("Benchmark results:");
     Serial.print("Megabytes: ");
-    Serial.print(bench_srv_result->megabytes);
-    Serial.print(".");
-    Serial.println(bench_srv_result->bytes);
-    Serial.print("Seconds: ");
-    Serial.println(bench_srv_result->time_ms/1000.0, 4);
-    Serial.print("Bytes/Sec: ");
-    Serial.println(totalBytes/(bench_srv_result->time_ms/1000.0), 4);
-    Serial.print("KBytes/Sec: ");
-    Serial.println((totalBytes/(bench_srv_result->time_ms/1000.0))/1000.0, 4);
-    Serial.print("KBits/Sec: ");
+    Serial.print(totalBytes / 1000000.0, 6);
+    Serial.print("  Seconds: ");
+    Serial.print(bench_srv_result->time_ms/1000.0, 4);
+//    Serial.print("Bytes/Sec: ");
+//    Serial.println(totalBytes/(bench_srv_result->time_ms/1000.0), 4);
+//    Serial.print("KBytes/Sec: ");
+//    Serial.println((totalBytes/(bench_srv_result->time_ms/1000.0))/1000.0, 4);
+    Serial.print("  KBits/Sec: ");
     Serial.println((((totalBytes/(bench_srv_result->time_ms/1000.0))/1000.0)*8), 4);
-    Serial.println();
+//    Serial.println();
   }
+}
+
+fnet_bench_cln_desc_t teensy_bench_cln_desc;
+void bench_cln_cmd(uint8_t argc, char* argv){
+    fnet_bench_cln_params_t         bench_cln_params;
+    fnet_netif_desc_t               netif = current_netif;
+    fnet_bench_cln_desc_t           bench_cln_desc;
+    fnet_char_t                     ip_str[FNET_IP_ADDR_STR_SIZE_MAX];
+    uint8_t i;
+
+    /* Set Benchmark client parameters.*/
+    fnet_memset_zero(&bench_cln_params, sizeof(bench_cln_params));
+
+    /* Default values */
+    bench_cln_params.type = SOCK_STREAM; /* TCP by default */
+    bench_cln_params.message_size = 1272;     /* Default message size */
+    bench_cln_params.message_number = 10000; /* Default number of messages */
+
+    /* -a <remote ip> [tcp|udp] [-m <message size>] [-mn <number of messages>] */
+    for(i = 0; i < (argc); i++){
+        
+        if (!fnet_strcmp(&argv[i], "-a")){ /*[-a <remote ip>] */
+            i += 3;
+            if(i < argc){
+                if(fnet_inet_ptos(&argv[i], &bench_cln_params.address) == FNET_ERR){
+                    goto ERROR_PARAMETER;
+                }
+                while(argv[i] != '\0'){
+                  i++;
+                }
+            }
+            else{
+                goto ERROR_PARAMETER;
+            }
+        }
+        else if (!fnet_strcmp(&argv[i], "tcp")){ /* TCP */
+            bench_cln_params.type = SOCK_STREAM;
+            while(argv[i] != '\0'){
+              i++;
+            }
+        }
+        else if (!fnet_strcmp(&argv[i], "udp")){ /* udp */
+            bench_cln_params.type = SOCK_DGRAM;
+            while(argv[i] != '\0'){
+              i++;
+            }
+        }
+        else if (!fnet_strcmp(&argv[i], "-m")){ /* [-m <message size>] */
+            fnet_char_t *p = 0;
+
+            i += 3;
+            if(i < argc){
+                bench_cln_params.message_size = fnet_strtoul(&argv[i], &p, 0);
+                if (bench_cln_params.message_size == 0){
+                    goto ERROR_PARAMETER;
+                }
+            }
+            else{
+                goto ERROR_PARAMETER;
+            }
+            while(argv[i] != '\0'){
+              i++;
+            }
+        }
+        else if (!fnet_strcmp(&argv[i], "-mn")){ /* [-mn <number of messages>] */
+            fnet_char_t *p = 0;
+
+            i += 4;
+            if(i < argc){
+                bench_cln_params.message_number = fnet_strtoul(&argv[i], &p, 0);
+                if (bench_cln_params.message_number == 0){
+                    goto ERROR_PARAMETER;
+                }
+            }
+            else{
+                goto ERROR_PARAMETER;
+            }
+            while(argv[i] != '\0'){
+              i++;
+            }
+        }
+        else if (argv[i] == '\0'){
+        
+        }
+        else{/* Wrong parameter.*/
+            goto ERROR_PARAMETER;
+        }
+    }
+
+    if(fnet_socket_addr_is_unspecified(&bench_cln_params.address) == FNET_TRUE){ /* Address is not set. */
+        Serial.println("Error: <remote ip> is not set");
+    }
+    else{
+        if(netif){ /* Only on one interface */
+            bench_cln_params.address.sa_scope_id = fnet_netif_get_scope_id(netif);
+        }
+
+        bench_cln_params.callback = bench_cln_callback_session_end;    /* Callback function.*/
+
+        /* Run Benchmark client. */
+        bench_cln_desc = fnet_bench_cln_init(&bench_cln_params);
+        if(bench_cln_desc){
+            teensy_bench_cln_desc = bench_cln_desc;
+//
+            Serial.println("Benchmark client started.");
+            Serial.print("Protocol: ");
+            Serial.println((bench_cln_params.type == SOCK_STREAM) ? "TCP" : "UDP");
+            Serial.print("Remote IP Addr: ");
+            Serial.println(fnet_inet_ntop(bench_cln_params.address.sa_family, bench_cln_params.address.sa_data, ip_str, sizeof(ip_str)));
+            Serial.print("Remote Port: ");
+            Serial.println(FNET_NTOHS(FNET_CFG_BENCH_CLN_PORT));
+            Serial.print("Message Size: ");
+            Serial.println(bench_cln_params.message_size);
+            Serial.print("Num. of messages: ");
+            Serial.println(bench_cln_params.message_number);
+            Serial.println();
+        }
+        else{
+            Serial.println("Benchmark client failed to start.");
+        }
+    }
+    return;
+
+ERROR_PARAMETER:
+    Serial.print("Bad parameter: ");
+    Serial.println(&argv[i]);
+    return;
+}
+
+static void bench_cln_callback_session_end(fnet_bench_cln_desc_t bench_cln_desc, const fnet_bench_cln_result_t *bench_cln_result, void *cookie){
+  if(bench_cln_result){
+//        fapp_bench_print_results (shell_desc, bench_cln_result->megabytes, bench_cln_result->bytes, bench_cln_result->time_ms);
+      uint64_t totalBytes = (bench_cln_result->megabytes * 1000000) + bench_cln_result->bytes;
+//    Serial.println("Benchmark results:");
+    Serial.print("Megabytes: ");
+    Serial.print(totalBytes / 1000000.0, 6);
+    Serial.print("  Seconds: ");
+    Serial.print(bench_cln_result->time_ms/1000.0, 4);
+    Serial.print("  KBits/Sec: ");
+    Serial.println((((totalBytes/(bench_cln_result->time_ms/1000.0))/1000.0)*8), 4);
+  }
+}
+
+void serialParser(uint8_t argc, char* argv){
+  for(uint8_t i = 0; i < (argc) /*avoid the last parameter.*/; i++){
+    if (!fnet_strcmp(&argv[i], "benchtx")){ /*benchtx */
+      i++;
+      if(i < argc){
+        argv += 8; //Advance length of command + 1
+        argc -= 8; //Decrease length same amount
+        Serial.println("Starting benchtx...");
+        bench_cln_cmd(argc, argv);
+        return;
+      }
+      else{
+        goto ERROR_PARAMETER;
+      }
+    }
+    else     if (!fnet_strcmp(&argv[i], "benchrx")){ /*benchrx */
+      i++;
+      if(i < argc){
+        argv += 8; //Advance length of command + 1
+        argc -= 8; //Decrease length same amount
+//        bench_cln_cmd(argc, argv);
+        Serial.println("Starting benchrx...");
+        return;
+      }
+      else{
+        goto ERROR_PARAMETER;
+      }
+    }
+    else{/* Wrong parameter.*/
+      goto ERROR_PARAMETER;
+    }
+  }
+  return;
+
+ERROR_PARAMETER:
+    Serial.println("Invalid command");
+    return;
 }

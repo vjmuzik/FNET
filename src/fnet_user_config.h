@@ -8,6 +8,8 @@
 #define _FNET_USER_CONFIG_H_
 #include <Arduino.h>
 #define FNET_CFG_MULTITHREADING (1)
+#define FNET_CFG_BENCH_CLN (1)  //Benchmark
+#define FNET_CFG_BENCH_CLN_BUFFER_SIZE          (8*1024)
 #define FNET_CFG_BENCH_SRV (1)  //Benchmark
 #define FNET_CFG_BENCH_SRV_BUFFER_SIZE          (8*1024)
 /*********************************************************************

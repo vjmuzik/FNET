@@ -15,10 +15,7 @@
 
 #include "stack/fnet_stdlib.h"
 
-typedef struct
-{
-    
-} fnet_usb_eth_if_t; // fnet_usb_if_t
+
 
 
 /************************************************************************
@@ -40,8 +37,13 @@ void fnet_usb_multicast_leave(fnet_netif_t *netif, fnet_mac_addr_t multicast_add
 
 fnet_return_t _fnet_usb_phy_read(fnet_netif_t *netif, fnet_uint32_t reg_addr, fnet_uint16_t *data);
 fnet_return_t _fnet_usb_phy_write(fnet_netif_t *netif, fnet_uint32_t reg_addr, fnet_uint16_t data);
-
+#if defined(__cplusplus)
+extern "C" {
+#endif
 fnet_uint32_t fnet_usb_crc_hash(fnet_mac_addr_t multicast_addr);
+#if defined(__cplusplus)
+}
+#endif
 void fnet_usb_multicast_join(fnet_netif_t *netif, fnet_mac_addr_t multicast_addr);
 void fnet_usb_multicast_leave(fnet_netif_t *netif, fnet_mac_addr_t multicast_addr);
 

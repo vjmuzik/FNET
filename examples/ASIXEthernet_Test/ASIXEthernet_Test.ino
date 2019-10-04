@@ -12,7 +12,7 @@ USBHub hub1(myusb);
 USBHub hub2(myusb);
 ASIXEthernet asix1(myusb);
 
-volatile uint8_t rbuf[16384]; // recieve buffer
+volatile uint8_t rbuf[1024*2]; // recieve buffer
 volatile uint8_t sbuf[2000]; // send buffer
 volatile uint16_t sbuflen; // length of data to send
 uint8_t MacAddress[6] = {0x00,0x50,0xB6,0xBE,0x8B,0xB4}; //Not setup yet, but can't be 0
@@ -44,6 +44,7 @@ fnet_return_t teensy_mutex_init(fnet_mutex_t *mutex) {
 
 void teensy_mutex_release(fnet_mutex_t *mutex) {
   Serial.println("Mutex released");
+  mutex_init_calls = 0;
   return; //TeensyThreads has no function for this?
 }
 
@@ -122,45 +123,26 @@ void setup() {
   setHandleMulticastLeave(handleMulticastLeave);
   setHandleMulticastJoin(handleMulticastJoin);
   setHandleIsConnected(handleIsConnected);
-  struct fnet_init_params     init_params;
-  
-  static const fnet_timer_api_t timer_api = { //Setup multi-thread timer
-    .timer_get_ms = timer_get_ms,
-    .timer_delay = 0,
-  };
-  /* Input parameters for FNET stack initialization */
-  init_params.netheap_ptr = stack_heap;
-  init_params.netheap_size = sizeof(stack_heap);
-  init_params.mutex_api = &teensy_mutex_api;
-  init_params.timer_api = &timer_api;
-  /* FNET Initialization */
-  if (fnet_init(&init_params) != FNET_ERR) {
-      Serial.println("TCP/IP stack initialization is done.\n");
-      /* You may use FNET stack API */
-      /* Initialize networking interfaces using fnet_netif_init(). */
-//        Get current net interface.
-      if(fnet_netif_init(FNET_CPU_ETH0_IF, MacAddress, 6) != FNET_ERR){
-        Serial.println("netif Initialized");
-        if((current_netif = fnet_netif_get_default()) == 0){
-          Serial.println("ERROR: Network Interface is not configurated!");
-        }
-        else {
-          checkLink();
-        }
-      }
-      else {
-        Serial.println("Error:netif initialization failed.\n");
-      }
-  }
-  else {
-      Serial.println("Error:TCP/IP stack initialization failed.\n");
-  }
 }
 
 void loop() {
   while(1){
     myusb.Task();
     asix1.read();
+    if(uint8_t index = Serial.available()){
+      if(index >= 64) break;
+      char serialMessage[64];
+      for(uint8_t i = 0;i<index;i++){
+        serialMessage[i] = Serial.read();
+        if(serialMessage[i] == ' '){ //Each command needs to be null-terminated
+          serialMessage[i] = '\0';
+        }
+        else if(serialMessage[i] == '\n'){ //Each command needs to be null-terminated
+          serialMessage[i] = '\0';
+        }
+      }
+      serialParser(index, (char*)&serialMessage);
+    }
 #ifdef STATS
     Looped++;
     if(advertise >= 1000) {
@@ -169,8 +151,10 @@ void loop() {
       Serial.print(Looped);
       Serial.print("  LoopedUSB: ");
       Serial.print(LoopedUSB);
-      Serial.print("  FNETMemFree: ");
-      Serial.print((uint32_t)fnet_free_mem_status());
+      if(fnet_netif_is_initialized(current_netif)){
+        Serial.print("  FNETMemFree: ");
+        Serial.print((uint32_t)fnet_free_mem_status());
+      }
       Serial.print("  LinkSpeed: ");
       Serial.println(asix1.PHYSpeed ? "100BASE" : "10BASE");
       Looped = 0;
