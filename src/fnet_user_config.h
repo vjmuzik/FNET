@@ -10,6 +10,8 @@
 #define FNET_CFG_MULTITHREADING (1)
 #define FNET_CFG_BENCH_CLN (1)  //Benchmark
 #define FNET_CFG_BENCH_CLN_BUFFER_SIZE          (8*1024)
+//#define FNET_CFG_SOCKET_TCP_TX_BUF_SIZE     (8U * 1024U)
+//#define FNET_CFG_SOCKET_TCP_RX_BUF_SIZE     (8U * 1024U)
 #define FNET_CFG_BENCH_SRV (1)  //Benchmark
 #define FNET_CFG_BENCH_SRV_BUFFER_SIZE          (8*1024)
 /*********************************************************************
@@ -41,6 +43,9 @@ typedef unsigned int fnet_index_t;
  ******************************************************************************/
 typedef char fnet_char_t;
 
+/**************************************************************************/ /*!
+ * @brief General return codes, used by most of API functions.
+ ******************************************************************************/
 typedef enum
 {
     FNET_OK  = (0), /**< No error.*/

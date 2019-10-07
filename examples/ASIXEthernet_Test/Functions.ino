@@ -149,9 +149,11 @@ void handleOutput(fnet_netif_t *netif, fnet_netbuf_t *nb) { //Called when a mess
     uint8_t* p = (uint8_t*)sbuf;
     _fnet_netbuf_to_buf(nb, 0u, FNET_NETBUF_COPYALL, p);
 
-//    if(nb->total_length >= 12){
+    if(nb->total_length >= 12){
 //      Serial.print("Message Transmitted: ");
 //      Serial.println(nb->total_length);
+//      Serial.print("QueuedBefore: ");
+//      Serial.println(asix1.txQueued());
 //      const uint8_t* end = p + nb->total_length;
 //      while(p < end){
 //        if(*p <= 0x0F) Serial.print("0");
@@ -160,9 +162,12 @@ void handleOutput(fnet_netif_t *netif, fnet_netbuf_t *nb) { //Called when a mess
 //        p++;
 //      }
 //      Serial.println();
-//    }
 //    p = (uint8_t*)sbuf;
     asix1.sendPacket(p, nb->total_length);
+//    Serial.print("QueuedAfter: ");
+//    Serial.println(asix1.txQueued());
+    }
+//    myusb.Task();
   }
 }
 

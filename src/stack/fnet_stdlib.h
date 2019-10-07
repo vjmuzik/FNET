@@ -67,12 +67,12 @@ typedef unsigned int fnet_flag_t;
 /**************************************************************************/ /*!
  * @brief Unsigned integer type representing the index.
  ******************************************************************************/
-//typedef unsigned int fnet_index_t;
+typedef unsigned int fnet_index_t;
 
 /**************************************************************************/ /*!
  * @brief Type representing the charecter.
  ******************************************************************************/
-//typedef char fnet_char_t;
+typedef char fnet_char_t;
 
 /**************************************************************************/ /*!
  * @brief Boolean type.
@@ -83,17 +83,8 @@ typedef enum
     FNET_TRUE  = 1  /**< TRUE Boolean value.*/
 } fnet_bool_t;
 
-/**************************************************************************/ /*!
- * @brief General return codes, used by most of API functions.
- ******************************************************************************/
-//typedef enum
-//{
-//    FNET_OK  = (0), /**< No error.*/
-//    FNET_ERR = (-1) /**< There is error.*/
-//} fnet_return_t;
 
-
-#define FNET_ALIGN_DIV(x, div)     ((fnet_uint32_t)((fnet_uint8_t *)(x) + ((div)-1U)) & (~((div)-1U)))
+#define FNET_ALIGN_DIV(x, div)     ((fnet_uint32_t)((volatile fnet_uint8_t *)(x) + ((div)-1U)) & (~((div)-1U)))
 
 #if defined(__cplusplus)
 extern "C" {

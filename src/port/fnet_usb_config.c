@@ -1,4 +1,5 @@
 #include "fnet.h"
+#include "fnet_user_config.h"
 
 //#if FNET_USB
 

@@ -23,7 +23,6 @@
 ***************************************************************************/
 
 #include "fnet.h"
-#include "fnet_serial.h"
 
 static fnet_size_t _fnet_serial_printk_mknumstr( fnet_char_t *numstr, void *nump, fnet_bool_t neg, fnet_size_t radix );
 static void _fnet_serial_printk_pad( fnet_uint8_t c, fnet_serial_stream_t stream, fnet_size_t curlen, fnet_size_t field_width, fnet_size_t *count );

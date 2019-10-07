@@ -261,3 +261,5 @@ fnet_netif_t fnet_eth0_if = {
 fnet_netif_t * fnet_usb_get_netif() {
     return &fnet_eth0_if;
 }
+
+

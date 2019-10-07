@@ -20,7 +20,6 @@
 #include "fnet.h"
 
 #if FNET_CFG_LINK
-#include "fnet_link.h"
 
 #if FNET_CFG_DEBUG_LINK && FNET_CFG_DEBUG
     #define FNET_DEBUG_LINK   FNET_DEBUG
