@@ -163,12 +163,17 @@ void handleOutput(fnet_netif_t *netif, fnet_netbuf_t *nb) { //Called when a mess
 //      }
 //      Serial.println();
 //    p = (uint8_t*)sbuf;
+    }
+    myusb.Task();
     asix1.sendPacket(p, nb->total_length);
 //    Serial.print("QueuedAfter: ");
 //    Serial.println(asix1.txQueued());
-    }
-//    myusb.Task();
+    myusb.Task();
   }
+}
+
+void handleWait() {
+  myusb.Task();
 }
 
 uint32_t _totalLength;

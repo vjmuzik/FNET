@@ -1,4 +1,4 @@
-#define STATS  //Print how many times each thread loops per second
+//#define STATS  //Print how many times each thread loops per second
 
 #include <USBHost_t36.h> //USB Host Driver
 #include <ASIXEthernet.h> //USB Ethernet Driver
@@ -99,7 +99,7 @@ fnet_time_t timer_get_ms(void){ //Used for multi-thread version
 fnet_dhcp_cln_params_t dhcp_params; //DHCP intialization parameters
 fnet_dhcp_cln_desc_t dhcp_desc; //DHCP object
 fnet_netif_desc_t current_netif; //Network interface, USB Ethernet
-static fnet_uint8_t         stack_heap[(64U * 1024U)];
+static DMAMEM fnet_uint8_t         stack_heap[(128U * 1024U)];
 
 void setup() {
   Serial.begin(115200);
@@ -111,6 +111,7 @@ void setup() {
   delay(10);
   myusb.begin();
   asix1.setHandleRecieve(handleRecieve);
+  asix1.setHandleWait(handleWait);
   Serial.println("USB Ready");
 //  threads.addThread(usbpoll);
   threads.addThread(usbthread);
