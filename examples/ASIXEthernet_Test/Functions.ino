@@ -177,82 +177,70 @@ void handleWait() {
 }
 
 uint32_t _totalLength;
+int32_t _remainingLength = 0;
 uint8_t* _lastIndex;
 uint8_t* _rxEnd;
 uint8_t* _rxStart;
-const uint8_t _packetBound[4] = {0,3,2,1};
 void handleRecieve(const uint8_t* data, uint32_t length) { //Called when ASIX gets a message
   if(length == 0) return;
   RECIEVE:
-  if(((data[0] | data[2]) == 0xFF) && ((data[1] | data[3]) == 0xFF)) { //Check for header
+  if(_remainingLength < 0){
+    Serial.println("Remaining");
+    while(_lastIndex < _rxEnd){
+      *_lastIndex = *data;
+      data++;
+      _lastIndex++;
+    }
+    _fnet_eth_input(&fnet_eth0_if, (uint8_t*)rbuf, _totalLength);
+    _remainingLength = abs(_remainingLength);
+    data += _remainingLength;
+    _remainingLength = length - ((_remainingLength + 3) & 0xFFFFFFFC);
+    length -= _remainingLength;
+    if(length) {
+      goto RECIEVE;
+    }
+  }
+  else if(((data[0] | data[2]) == 0xFF) && ((data[1] | data[3]) == 0xFF)) { //Check for header
     _lastIndex = (uint8_t*)rbuf;
     _totalLength = (data[1] << 8) | data[0];
-    const uint8_t* end = data + (((_totalLength + 6) <= length) ? _totalLength+6 : length);
-    _rxEnd = (uint8_t*)rbuf + _totalLength;
-    data += 6;
-    while(data < end){
-      *_lastIndex = *data;
-      data++;
-      _lastIndex++;
+    _remainingLength = length - ((_totalLength + 9) & 0xFFFFFFFC);
+    if(_remainingLength < 0){
+//      Serial.print("Remaining: ");
+//      Serial.println(_remainingLength);
+      const uint8_t* end = data + length;
+      _rxEnd = (uint8_t*)rbuf + _totalLength;
+      data += 6;
+      while(data < end){
+        *_lastIndex = *data;
+        data++;
+        _lastIndex++;
+      }
     }
-  }
-  else if(_lastIndex <= _rxEnd){
-    const uint8_t* end = data + length;
-    while(data < end){
-      *_lastIndex = *data;
-      data++;
-      _lastIndex++;
-    }
-  }
-  else{ //Error edgecase unknown cause
-    const uint8_t* end = data + length;
-    Serial.println("Message Recieve Error, searching for next header");
-    Serial.print("length: ");
-    Serial.println(length);
-    Serial.print("Message: ");
-    while(data < end){
-      data++;
-      if(*data <= 0x0F) Serial.print("0");
-      Serial.print(*data, HEX);
-      Serial.print(" ");
-      if(((data[0] | data[2]) == 0xFF) && ((data[1] | data[3]) == 0xFF)) { //Check for header
-        Serial.println();
-        Serial.println("Header found!");
+    else {
+      data += 6;
+      _fnet_eth_input(&fnet_eth0_if, (uint8_t*)data, _totalLength);
+      if(_remainingLength) {        
+//        Serial.println("Remaining data");
+//        Serial.print("length: ");
+//        Serial.print(length);
+//        Serial.print("  rlength: ");
+//        Serial.println(_remainingLength);
+        data -= 6;
+        data += ((_totalLength + 9) & 0xFFFFFFFC);
+        length -= ((_totalLength + 9) & 0xFFFFFFFC);
+//        asix1.print_hexbytes((uint8_t*)data, ((_totalLength + 9) & 0xFFFFFFFC));
         goto RECIEVE;
       }
     }
-    Serial.println();
-    Serial.println("Error: No new header found");
+  }
+  else if(length == abs(_remainingLength)) return; //Technically an error and I don't know where it's happening, but this poses no problems so it's fine
+  else{ //Error edgecase unknown cause
+    Serial.println("Message Recieve Error, searching for next header");
+    Serial.print("length: ");
+    Serial.print(length);
+    Serial.print("  rlength: ");
+    Serial.println(_remainingLength);
     return;
-  }
-  if(_lastIndex >= _rxEnd && _totalLength > 1000) {
-//    Serial.print("Length: ");
-//    Serial.println(_totalLength);
-//    Serial.print("LastUSBLength: ");
-//    Serial.println(length);
-//    Serial.print("LengthRemaining: ");
-//    Serial.println(length-_totalLength-6);
-//    Serial.print("Message Recieved: ");
-//    for(uint16_t i = 0; i < _totalLength; i++){
-//      if(rbuf[i] <= 0x0F) Serial.print("0");
-//      Serial.print(rbuf[i], HEX);
-//      Serial.print(" ");
-//    }
-//    Serial.println();
-//    Serial.println();
-  }
-//  Serial.println();
-//  Serial.println();
-  if(_lastIndex >= _rxEnd) {
-//    Serial.println("Recieved");
-    _fnet_eth_input(&fnet_eth0_if, (uint8_t*)rbuf, _totalLength);
-    if((length-_totalLength-6) > 3 && (length-_totalLength-6) < 4294965840){
-//      Serial.println("Recieve Looped");
-      length -= (_totalLength + 6 + _packetBound[(_totalLength + 6) % 4]);
-      goto RECIEVE;
-//        Serial.println();
-    }
-//    Serial.println();
   }
 }
 
