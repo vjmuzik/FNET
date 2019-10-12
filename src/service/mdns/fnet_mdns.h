@@ -85,6 +85,7 @@ typedef struct
  ******************************************************************************/
 typedef struct
 {
+    const fnet_char_t           *name;          /**< @brief Name used as service-name, advertised by the MDNS server. */
     const char                  *service_type;             /**< @brief Service Type. Null-terminated string. Example "_http._tcp". */
     fnet_uint16_t               service_port;              /**< @brief Service Port number (in network byte order). */
     const fnet_mdns_txt_key_t   *(*service_get_txt)(void); /**< @brief Call-back function, which returns a pointer to the TXT key table.

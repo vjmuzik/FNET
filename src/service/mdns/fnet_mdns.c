@@ -494,6 +494,7 @@ fnet_mdns_service_desc_t fnet_mdns_service_register(fnet_mdns_desc_t mdns_desc, 
     fnet_mdns_service_desc_t   result = 0;
     fnet_mdns_if_t             *mdns_if = (fnet_mdns_if_t *)mdns_desc;
     fnet_index_t               i;
+    fnet_strcpy(mdns_if->service_name, service->name);
 
     if(mdns_if)
     {
