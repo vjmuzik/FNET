@@ -244,7 +244,7 @@ void handleRecieve(const uint8_t* data, uint32_t length) { //Called when ASIX ge
   }
 }
 
-void handleSetMACAddress(uint8_t * hw_addr) { //Gets calls on initialization
+void handleSetMACAddress(uint8_t * hw_addr) { //Gets called on initialization
   Serial.print("SetMACAddress: ");
   for(uint8_t i = 0; i < 6; i++) {
     if(hw_addr[i] <= 0x0F) Serial.print("0");
@@ -260,6 +260,12 @@ void handleGetMACAddress(fnet_mac_addr_t * hw_addr) { //Gets called everytime a 
   (*hw_addr)[3] = asix1.nodeID[3];
   (*hw_addr)[4] = asix1.nodeID[4];
   (*hw_addr)[5] = asix1.nodeID[5];
+  MacAddress[0] = asix1.nodeID[0];
+  MacAddress[1] = asix1.nodeID[1];
+  MacAddress[2] = asix1.nodeID[2];
+  MacAddress[3] = asix1.nodeID[3];
+  MacAddress[4] = asix1.nodeID[4];
+  MacAddress[5] = asix1.nodeID[5];
 //  Serial.print("GetMACAddress: ");
 //  for(uint8_t i = 0; i < 6; i++) {
 //    if(hw_addr[i] <= 0x0F) Serial.print("0");
@@ -290,14 +296,15 @@ void handleMulticastJoin(fnet_netif_t *netif, fnet_mac_addr_t multicast_addr) { 
     Serial.print(multicast_addr[i], HEX);
   }
   Serial.println();
-  uint8_t crc = (uint8_t)(fnet_usb_crc_hash(multicast_addr) >> 26);
+  uint8_t crc = byteReverse((uint8_t)(fnet_usb_crc_hash(multicast_addr) & 0x000000FF)) >> 2;
+
   crc &= 0x3F;
   mcHashTable[crc >> 3] |= 1 << (crc & 7);
   asix1.setMulticast((uint8_t*)&mcHashTable);
-  Serial.println("MulticastTable: ");
-  for(uint8_t i = 0; i < 8; i++) {
-    Serial.println(mcHashTable[i],BIN);
-  }
+//  Serial.println("MulticastTable: ");
+//  for(uint8_t i = 0; i < 8; i++) {
+//    Serial.println(mcHashTable[i],BIN);
+//  }
 }
 
 void handleMulticastLeave(fnet_netif_t *netif, fnet_mac_addr_t multicast_addr) { //Called when leaving multicast group
@@ -308,14 +315,21 @@ void handleMulticastLeave(fnet_netif_t *netif, fnet_mac_addr_t multicast_addr) {
     Serial.print(multicast_addr[i], HEX);
   }
   Serial.println();
-  uint8_t crc = (uint8_t)(fnet_usb_crc_hash(multicast_addr) >> 26);
+  uint8_t crc = byteReverse((uint8_t)(fnet_usb_crc_hash(multicast_addr) & 0x000000FF)) >> 2;
   crc &= 0x3F;
   mcHashTable[crc >> 3] ^= 1 << (crc & 7);
   asix1.setMulticast((uint8_t*)&mcHashTable);
-  Serial.println("MulticastTable: ");
-  for(uint8_t i = 0; i < 8; i++) {
-    Serial.println(mcHashTable[i],BIN);
-  }
+//  Serial.println("MulticastTable: ");
+//  for(uint8_t i = 0; i < 8; i++) {
+//    Serial.println(mcHashTable[i],BIN);
+//  }
+}
+
+uint8_t byteReverse(uint8_t x) { 
+   x = ((x >> 1) & 0x55) | ((x << 1) & 0xaa); 
+   x = ((x >> 2) & 0x33) | ((x << 2) & 0xcc); 
+   x = ((x >> 4) & 0x0f) | ((x << 4) & 0xf0); 
+   return x;    
 }
 
 fnet_bool_t handleIsConnected() {
