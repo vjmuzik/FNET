@@ -5,6 +5,8 @@
 #include "fnet_usb.h"
 #include "stack/fnet_eth_prv.h"
 
+#if !defined(ARDUINO_TEENSY41)
+
 /************************************************************************
  * NAME: inits
  *
@@ -262,4 +264,4 @@ fnet_netif_t * fnet_usb_get_netif() {
     return &fnet_eth0_if;
 }
 
-
+#endif // !ARDUINO_TEENSY41

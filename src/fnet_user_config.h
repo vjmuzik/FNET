@@ -6,6 +6,9 @@
 #ifndef _FNET_USER_CONFIG_H_
 
 #define _FNET_USER_CONFIG_H_
+
+#define FNET_CFG_COMP_GNUC  (1) //GCC compiler
+
 #include <Arduino.h>
 #define FNET_CFG_MULTITHREADING (1)
 #define FNET_CFG_BENCH_CLN (1)  //Benchmark
@@ -13,7 +16,18 @@
 #define FNET_CFG_SOCKET_TCP_TX_BUF_SIZE     (32U * 1024U)
 #define FNET_CFG_SOCKET_TCP_RX_BUF_SIZE     (32U * 1024U)
 #define FNET_CFG_BENCH_SRV (1)  //Benchmark
-#define FNET_CFG_BENCH_SRV_BUFFER_SIZE          (32*1024)
+#define FNET_CFG_BENCH_SRV_BUFFER_SIZE          (128*1024)
+
+/**************************************************************************/ /*!
+ * @brief General return codes, used by most of API functions.
+ ******************************************************************************/
+typedef enum
+{
+    FNET_OK  = (0), /**< No error.*/
+    FNET_ERR = (-1) /**< There is error.*/
+} fnet_return_t;
+
+#if !defined(ARDUINO_TEENSY41)
 /*********************************************************************
  *
  * The basic data types.
@@ -42,15 +56,6 @@ typedef unsigned int fnet_index_t;
  * @brief Type representing the charecter.
  ******************************************************************************/
 typedef char fnet_char_t;
-
-/**************************************************************************/ /*!
- * @brief General return codes, used by most of API functions.
- ******************************************************************************/
-typedef enum
-{
-    FNET_OK  = (0), /**< No error.*/
-    FNET_ERR = (-1) /**< There is error.*/
-} fnet_return_t;
 
 /**************************************************************************/ /*!
  * @def FNET_HTONS
@@ -271,6 +276,8 @@ fnet_return_t fnet_cpu_serial_init(fnet_index_t port_number, fnet_uint32_t baud_
 #ifndef FNET_CPU_INSTRUCTION_TO_ADDR
 #define FNET_CPU_INSTRUCTION_TO_ADDR(addr)    (addr)
 #endif
+
+#endif //!ARDUINO_TEENSY41
 
 /*****************************************************************************
 * Compiler support FNET_CFG_COMP_<name> is defined in project options.

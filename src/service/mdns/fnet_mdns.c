@@ -529,6 +529,12 @@ fnet_mdns_service_desc_t fnet_mdns_service_register(fnet_mdns_desc_t mdns_desc, 
     return result;
 }
 
+void fnet_mdns_service_update_name(fnet_mdns_desc_t mdns_desc, const fnet_mdns_service_t *service)
+{
+    fnet_mdns_if_t             *mdns_if = (fnet_mdns_if_t *)mdns_desc;
+    fnet_strcpy(mdns_if->service_name, service->name);
+}
+
 /************************************************************************
 * Unregister application service from the mDNS server.
 ************************************************************************/
@@ -718,7 +724,6 @@ static void fnet_mdns_update_name(fnet_mdns_if_t *mdns_if, const fnet_char_t *na
 
         /* Copy name. */
         fnet_strcpy(mdns_if->host_name, name);
-        fnet_strcpy(mdns_if->service_name, name);
 
         /* Allow only legal characters in address record names.*/
         for(c = mdns_if->host_name; *c != '\0'; c++)
@@ -744,6 +749,7 @@ static void fnet_mdns_update_name(fnet_mdns_if_t *mdns_if, const fnet_char_t *na
 
     FNET_DEBUG_MDNS("MDNS: Host-name set to (%s).", mdns_if->host_name);
 }
+
 /************************************************************************
 * Update counter of host.
 ************************************************************************/

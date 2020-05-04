@@ -15,7 +15,7 @@
 
 #include "stack/fnet_stdlib.h"
 
-
+#if !defined(ARDUINO_TEENSY41)
 
 
 /************************************************************************
@@ -92,5 +92,5 @@ extern fnet_netif_t fnet_eth0_if;
 #define FNET_CPU_DATA_MEMORY_BARRIER    FNET_COMP_ASM("DMB")
 fnet_netif_t * fnet_usb_get_netif();
 
-
+#endif // !ARDUINO_TEENSY41
 #endif /* fnet_usb_eth_h */

@@ -1,5 +1,6 @@
 #include "fnet.h"
 #include "fnet_user_config.h"
+#if !defined(ARDUINO_TEENSY41)
 
 //#if FNET_USB
 
@@ -36,3 +37,4 @@ fnet_return_t fnet_cpu_serial_init(fnet_index_t port_number, fnet_uint32_t baud_
 }
 
 //#endif /*FNET_USB*/
+#endif // !ARDUINO_TEENSY41
