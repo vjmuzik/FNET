@@ -101,7 +101,7 @@ void checkLink(){
       /* You may use FNET stack API */
       /* Initialize networking interfaces using fnet_netif_init(). */
 //        Get current net interface.
-      if(fnet_netif_init(FNET_CPU_ETH0_IF, MacAddress, 6) != FNET_ERR){
+      if(fnet_netif_init(FNET_CPU_USB0_IF, MacAddress, 6) != FNET_ERR){
         Serial.println("netif Initialized");
         if((current_netif = fnet_netif_get_default()) == 0){
           Serial.println("ERROR: Network Interface is not configurated!");
@@ -191,7 +191,7 @@ void handleRecieve(const uint8_t* data, uint32_t length) { //Called when ASIX ge
       data++;
       _lastIndex++;
     }
-    _fnet_eth_input(&fnet_eth0_if, (uint8_t*)rbuf, _totalLength);
+    _fnet_eth_input(&fnet_usb0_if, (uint8_t*)rbuf, _totalLength);
     _remainingLength = abs(_remainingLength);
     data += _remainingLength;
     _remainingLength = length - ((_remainingLength + 3) & 0xFFFFFFFC);
@@ -218,7 +218,7 @@ void handleRecieve(const uint8_t* data, uint32_t length) { //Called when ASIX ge
     }
     else {
       data += 6;
-      _fnet_eth_input(&fnet_eth0_if, (uint8_t*)data, _totalLength);
+      _fnet_eth_input(&fnet_usb0_if, (uint8_t*)data, _totalLength);
       if(_remainingLength) {        
 //        Serial.println("Remaining data");
 //        Serial.print("length: ");

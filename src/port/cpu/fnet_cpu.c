@@ -23,6 +23,8 @@
 ***************************************************************************/
 #include "fnet.h"
 
+#if defined(ARDUINO_TEENSY41)
+
 #if (FNET_CFG_CPU_TIMER_NUMBER<0u)||(FNET_CFG_CPU_TIMER_NUMBER>FNET_CFG_CPU_TIMER_NUMBER_MAX)
     #error "FNET_CFG_CPU_TIMER_NUMBER must be from 0 to FNET_CFG_CPU_TIMER_NUMBER_MAX."
 #endif
@@ -65,3 +67,4 @@ fnet_uint32_t fnet_htonl(fnet_uint32_t long_var)
     return result;
 }
 #endif /* FNET_CFG_CPU_LITTLE_ENDIAN */
+#endif /* ARDUINO_TEENSY41 */

@@ -5,7 +5,7 @@
 #include "fnet_usb.h"
 #include "stack/fnet_eth_prv.h"
 
-#if !defined(ARDUINO_TEENSY41)
+//#if !defined(ARDUINO_TEENSY41)
 
 /************************************************************************
  * NAME: inits
@@ -34,7 +34,9 @@ fnet_return_t fnet_usb_get_hw_addr(fnet_netif_t *netif, uint8_t * hw_addr){
        && (hw_addr) )
     {
 //        Get MAC adress here
-        _handleGetMACAddress((fnet_mac_addr_t *)hw_addr);
+        if(_handleGetMACAddress != NULL){
+          _handleGetMACAddress((fnet_mac_addr_t *)hw_addr);
+        }
         result = FNET_OK;
     }
     else
@@ -57,7 +59,9 @@ fnet_return_t fnet_usb_set_hw_addr(fnet_netif_t *netif, uint8_t * hw_addr){
        && ((hw_addr[0] & 0x01U) == 0x00U)) /* Most significant nibble should be always even.*/
     {
 //        Set MAC adress here
-        _handleSetMACAddress(hw_addr);
+        if(_handleSetMACAddress != NULL){
+          _handleSetMACAddress(hw_addr);
+        }
         _fnet_eth_change_addr_notify(netif);
 
         result = FNET_OK;
@@ -77,7 +81,10 @@ fnet_return_t fnet_usb_get_statistics(struct fnet_netif *netif, struct fnet_neti
 }
 
 fnet_bool_t fnet_usb_is_connected(fnet_netif_t *netif){
-    return _handleIsConnected();
+    if (_handleIsConnected != NULL) {
+        return _handleIsConnected();
+    }
+    return false;
 }
 
 /************************************************************************
@@ -92,7 +99,9 @@ void fnet_usb_eth_output(fnet_netif_t *netif, fnet_netbuf_t *nb){
 //    {
 //        _fnet_netbuf_to_buf(nb, 0u, FNET_NETBUF_COPYALL, tx_buffer);
 //    }
-    _handleOutput(netif, nb);
+    if(_handleOutput != NULL){
+      _handleOutput(netif, nb);
+    }
     _fnet_netbuf_free_chain(nb);
 }
 
@@ -116,7 +125,9 @@ fnet_return_t _fnet_usb_phy_read(fnet_netif_t *netif, fnet_uint32_t reg_addr, fn
 //    fnet_eth_if_t       *eth_if = (fnet_eth_if_t *)(netif->netif_prv);
 
 //Read phy into data pointer
-    _handlePHYRead(reg_addr, data);
+    if(_handlePHYRead != NULL){
+      _handlePHYRead(reg_addr, data);
+    }
 
 return FNET_OK; //Or FNET_OK
 }
@@ -130,7 +141,9 @@ return FNET_OK; //Or FNET_OK
 fnet_return_t _fnet_usb_phy_write(fnet_netif_t *netif, fnet_uint32_t reg_addr, fnet_uint16_t data) {
 //    fnet_return_t       result;
 //    fnet_eth_if_t       *eth_if = (fnet_eth_if_t *)(netif->netif_prv);
-    _handlePHYWrite(reg_addr, data);
+    if(_handlePHYWrite != NULL){
+        _handlePHYWrite(reg_addr, data);
+    }
     return FNET_OK; //Or FNET_OK
 }
 
@@ -181,7 +194,10 @@ void fnet_usb_multicast_join(fnet_netif_t *netif, fnet_mac_addr_t multicast_addr
 //    crc &= 0x3FU;
 //
 //    reg_value = (fnet_uint32_t)(0x1U << (crc & 0x1FU));
-    _handleMulticastJoin(netif, multicast_addr);}
+    if(_handleMulticastJoin != NULL){
+      _handleMulticastJoin(netif, multicast_addr);
+    }
+}
 
 /************************************************************************
 * DESCRIPTION: Leavess a multicast group on USB interface.
@@ -196,7 +212,9 @@ void fnet_usb_multicast_leave(fnet_netif_t *netif, fnet_mac_addr_t multicast_add
 //    crc &= 0x3FU;
 //
 //    reg_value = (fnet_uint32_t)(0x1U << (crc & 0x1FU));
-    _handleMulticastLeave(netif, multicast_addr);
+    if(_handleMulticastLeave != NULL){
+      _handleMulticastLeave(netif, multicast_addr);
+    }
 }
 #endif /* FNET_CFG_MULTICAST */
 
@@ -237,7 +255,7 @@ const fnet_netif_api_t fnet_usb_mac_api = {
 /*****************************************************************************
  *     Ethernet Control data structure
  ******************************************************************************/
-static fnet_eth_if_t fnet_usb_eth0_if = {
+static fnet_eth_if_t fnet_usb_usb0_if = {
 //    .eth_prv = NULL,                       /* Points to Ethernet driver-specific control data structure. */
     .eth_mac_number = 0,                            /* MAC module number. */
     .eth_output = fnet_usb_eth_output,                  /* Ethernet driver output.*/
@@ -253,15 +271,15 @@ static fnet_eth_if_t fnet_usb_eth0_if = {
  * DESCRIPTION: Indexes ethernet interface and network API structures. See
  *  fnet_netif_prv.h for full specification of this struct.
  *************************************************************************/
-fnet_netif_t fnet_eth0_if = {
+fnet_netif_t fnet_usb0_if = {
     .netif_name = {'e','t','h','0'},     /* Network interface name.*/
     .netif_mtu = 1500,       /* Maximum transmission unit.*/
-    .netif_prv = &fnet_usb_eth0_if,        /* Points to interface specific data structure.*/
+    .netif_prv = &fnet_usb_usb0_if,        /* Points to interface specific data structure.*/
     .netif_api = &fnet_usb_mac_api                /* Interface API */
 };
 
 fnet_netif_t * fnet_usb_get_netif() {
-    return &fnet_eth0_if;
+    return &fnet_usb0_if;
 }
 
-#endif // !ARDUINO_TEENSY41
+//#endif // !ARDUINO_TEENSY41

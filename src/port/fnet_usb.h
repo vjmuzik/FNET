@@ -15,7 +15,7 @@
 
 #include "stack/fnet_stdlib.h"
 
-#if !defined(ARDUINO_TEENSY41)
+//#if !defined(ARDUINO_TEENSY41)
 
 
 /************************************************************************
@@ -87,10 +87,14 @@ fnet_bool_t (*_handleIsConnected)();
 void setHandleIsConnected(fnet_bool_t (*fptr)()) {
     _handleIsConnected = fptr;
 };
-extern fnet_netif_t fnet_eth0_if;
-#define FNET_CPU_ETH0_IF ((fnet_netif_desc_t)(&fnet_eth0_if))
+extern fnet_netif_t fnet_usb0_if;
+#define FNET_CPU_USB0_IF ((fnet_netif_desc_t)(&fnet_usb0_if))
+#if !defined(ARDUINO_TEENSY41)
+#define FNET_CPU_ETH0_IF FNET_CPU_USB0_IF
+#endif
+
 #define FNET_CPU_DATA_MEMORY_BARRIER    FNET_COMP_ASM("DMB")
 fnet_netif_t * fnet_usb_get_netif();
 
-#endif // !ARDUINO_TEENSY41
+//#endif // !ARDUINO_TEENSY41
 #endif /* fnet_usb_eth_h */

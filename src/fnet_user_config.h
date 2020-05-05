@@ -12,7 +12,7 @@
 #include <Arduino.h>
 #define FNET_CFG_MULTITHREADING (1)
 #define FNET_CFG_BENCH_CLN (1)  //Benchmark
-#define FNET_CFG_BENCH_CLN_BUFFER_SIZE          (32*1024)
+#define FNET_CFG_BENCH_CLN_BUFFER_SIZE          (64*1024)
 #define FNET_CFG_SOCKET_TCP_TX_BUF_SIZE     (32U * 1024U)
 #define FNET_CFG_SOCKET_TCP_RX_BUF_SIZE     (32U * 1024U)
 #define FNET_CFG_BENCH_SRV (1)  //Benchmark
