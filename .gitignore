@@ -13,3 +13,8 @@ src/service/.DS_Store
 src/.DS_Store
 src/port/.DS_Store
 src/service/.DS_Store
+src/EuconProxy.c
+src/EuconProxy.h
+src/.DS_Store
+src/port/.DS_Store
+src/service/.DS_Store

@@ -494,7 +494,7 @@
  * @showinitializer
  ******************************************************************************/
 #ifndef FNET_CFG_SOCKET_BSD_NAMES
-    #define FNET_CFG_SOCKET_BSD_NAMES           (1)
+    #define FNET_CFG_SOCKET_BSD_NAMES           (0)
 #endif
 
 /**************************************************************************/ /*!

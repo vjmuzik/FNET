@@ -70,6 +70,10 @@ typedef struct
     void                    *callback_param;    /**< @brief Optional application-specific parameter. @n It's passed to the @c callback function as input parameter. */
 } fnet_link_params_t;
 
+#if defined(__cplusplus)
+extern "C" {
+#endif
+
 /***************************************************************************/ /*!
  *
  * @brief    Initializes the Link-Detection service.
@@ -145,6 +149,10 @@ fnet_bool_t fnet_link_is_enabled(fnet_link_desc_t desc);
  *
  ******************************************************************************/
 fnet_link_desc_t fnet_link_get_by_netif(fnet_netif_desc_t netif);
+
+#if defined(__cplusplus)
+}
+#endif
 
 /*! @} */
 
