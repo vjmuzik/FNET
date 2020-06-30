@@ -32,13 +32,13 @@
     #define FNET_DEBUG_TLS(...)    do{}while(0)
 #endif
 
-#include "mbedtls/entropy.h"
-#include "mbedtls/ctr_drbg.h"
-#include "mbedtls/certs.h"
-#include "mbedtls/x509.h"
-#include "mbedtls/ssl.h"
-#include "mbedtls/ssl_cache.h"
-#include "mbedtls/debug.h"
+#include "third_party/mbedtls-2.12.0/src/mbedtls/entropy.h"
+#include "third_party/mbedtls-2.12.0/src/mbedtls/ctr_drbg.h"
+#include "third_party/mbedtls-2.12.0/src/mbedtls/certs.h"
+#include "third_party/mbedtls-2.12.0/src/mbedtls/x509.h"
+#include "third_party/mbedtls-2.12.0/src/mbedtls/ssl.h"
+#include "third_party/mbedtls-2.12.0/src/mbedtls/ssl_cache.h"
+#include "third_party/mbedtls-2.12.0/src/mbedtls/debug.h"
 
 /************************************************************************
 *     Definitions

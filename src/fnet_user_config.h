@@ -387,6 +387,19 @@ fnet_return_t fnet_cpu_serial_init(fnet_index_t port_number, fnet_uint32_t baud_
 #define FNET_CFG_LINK                       (1)
 
 /**************************************************************************/ /*!
+ * @def      FNET_CFG_TLS
+ * @brief    TLS Library support:
+ *               - @c 1..n = is enabled (mbedTLS). Its value defines
+ *                      the maximum number of the TLS contexts that can be initialized
+ *                      simultaneously, using fnet_tls_init().
+ *               - @b @c 0 = is disabled (Default value).
+ * @showinitializer
+ ******************************************************************************/
+#ifndef FNET_CFG_TLS
+    #define FNET_CFG_TLS                (2)
+#endif
+
+/**************************************************************************/ /*!
  * @def      FNET_CFG_TIMER_ALT
  * @brief    Alternative timer support:
  *               - @c 1 = is enabled. User application must implement own Timer API defined by fnet_timer_api_t and provide it during FNET initialization.

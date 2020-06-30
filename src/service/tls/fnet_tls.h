@@ -24,6 +24,7 @@
 #ifndef _FNET_TLS_H_
 
 #define _FNET_TLS_H_
+#include "third_party/mbedtls-2.12.0/src/mbedtls/certs.h"
 
 #if FNET_CFG_TLS || defined(__DOXYGEN__)
 
