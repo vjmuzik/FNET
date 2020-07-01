@@ -294,7 +294,7 @@ fnet_return_t fnet_cpu_serial_init(fnet_index_t port_number, fnet_uint32_t baud_
 * IPv4 and/or IPv6 protocol support.
 ******************************************************************************/
 #define FNET_CFG_IP4                (1)
-#define FNET_CFG_IP6                (1)
+//#define FNET_CFG_IP6                (1)
 
 /*****************************************************************************
 * TCP protocol support.

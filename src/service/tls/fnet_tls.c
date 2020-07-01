@@ -264,7 +264,7 @@ fnet_return_t fnet_tls_set_ca_certificate(fnet_tls_desc_t tls_desc, const fnet_u
             mbedtls_ssl_conf_ca_chain(&tls_if->ssl_config, &tls_if->ca_x509_crt, NULL);
 
             /* Set the certificate verification mode */
-            mbedtls_ssl_conf_authmode(&tls_if->ssl_config, MBEDTLS_SSL_VERIFY_REQUIRED);
+            mbedtls_ssl_conf_authmode(&tls_if->ssl_config, MBEDTLS_SSL_VERIFY_OPTIONAL);
             result = FNET_OK;
         }
     }
@@ -344,10 +344,10 @@ void fnet_tls_socket_close(fnet_tls_socket_t tls_sock)
     if(tls_sock)
     {
         fnet_service_mutex_lock();
-#if 0
+//#if 0
         /* Notify the peer that the connection is being closed */
         mbedtls_ssl_close_notify(tls_sock);
-#endif
+//#endif
         /* Free referenced items in an SSL context and clear memory.*/
         mbedtls_ssl_free(tls_sock);
 
