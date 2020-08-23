@@ -296,6 +296,15 @@ fnet_return_t fnet_cpu_serial_init(fnet_index_t port_number, fnet_uint32_t baud_
 #define FNET_CFG_IP4                (1)
 //#define FNET_CFG_IP6                (1)
 
+/**************************************************************************/ /*!
+ * @def      FNET_CFG_IP_MAX_PACKET
+ * @brief    Maximum size for the IPv4 and IPv6 datagram,
+ *           the largest allowed value is 65535. @n
+ *           Default value is 10 KB.
+ * @showinitializer
+ ******************************************************************************/
+#define FNET_CFG_IP_MAX_PACKET              (32U*1024U)
+
 /*****************************************************************************
 * TCP protocol support.
 * You can disable it to save a substantial amount of code if
