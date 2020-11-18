@@ -559,17 +559,17 @@ static fnet_ssize_t _fnet_udp_snd( fnet_socket_if_t *sk, const fnet_uint8_t *buf
 
 #if FNET_CFG_CPU_ETH_ADJUSTABLE_TIMER
     fnet_netif_t                            *netif = FNET_NULL;
-    fnet_scope_id_t                         scope_id = 0u;
-
-    /* Check Scope ID.*/
-    if(foreign_addr->sa_scope_id) /* Take scope id from destination address.*/
-    {
-        scope_id = foreign_addr->sa_scope_id;
-    }
-    else  /* Take scope id from source address.*/
-    {
-        scope_id = sk->local_addr.sa_scope_id;
-    }
+//    fnet_scope_id_t                         scope_id = 0u;
+//
+//    /* Check Scope ID.*/
+//    if(foreign_addr->sa_scope_id) /* Take scope id from destination address.*/
+//    {
+//        scope_id = foreign_addr->sa_scope_id;
+//    }
+//    else  /* Take scope id from source address.*/
+//    {
+//        scope_id = sk->local_addr.sa_scope_id;
+//    }
     netif = _fnet_netif_get_default();
 
     if((flags & MSG_TIMESTAMP) != 0U){

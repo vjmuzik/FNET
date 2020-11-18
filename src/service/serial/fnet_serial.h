@@ -136,6 +136,12 @@ extern const struct fnet_serial_stream fnet_serial_stream_port2;
 extern const struct fnet_serial_stream fnet_serial_stream_port3;
 extern const struct fnet_serial_stream fnet_serial_stream_port4;
 extern const struct fnet_serial_stream fnet_serial_stream_port5;
+extern const struct fnet_serial_stream fnet_serial_stream_port6;
+extern const struct fnet_serial_stream fnet_serial_stream_port7;
+extern const struct fnet_serial_stream fnet_serial_stream_port8;
+extern const struct fnet_serial_stream fnet_serial_stream_port9;
+extern const struct fnet_serial_stream fnet_serial_stream_port10;
+extern const struct fnet_serial_stream fnet_serial_stream_port11;
 
 /**************************************************************************/ /*!
  * @brief Stream descriptor associated with the serial port 0.
@@ -173,6 +179,42 @@ extern const struct fnet_serial_stream fnet_serial_stream_port5;
  ******************************************************************************/
 #define FNET_SERIAL_STREAM_PORT5    ((fnet_serial_stream_t)(&fnet_serial_stream_port5))
 
+/**************************************************************************/ /*!
+ * @brief Stream descriptor associated with the serial port 6.
+ * @see FNET_SERIAL_STREAM_DEFAULT
+ ******************************************************************************/
+#define FNET_SERIAL_STREAM_PORT6    ((fnet_serial_stream_t)(&fnet_serial_stream_port6))
+
+/**************************************************************************/ /*!
+ * @brief Stream descriptor associated with the serial port 7.
+ * @see FNET_SERIAL_STREAM_DEFAULT
+ ******************************************************************************/
+#define FNET_SERIAL_STREAM_PORT7    ((fnet_serial_stream_t)(&fnet_serial_stream_port7))
+
+/**************************************************************************/ /*!
+ * @brief Stream descriptor associated with the serial port 8.
+ * @see FNET_SERIAL_STREAM_DEFAULT
+ ******************************************************************************/
+#define FNET_SERIAL_STREAM_PORT8    ((fnet_serial_stream_t)(&fnet_serial_stream_port8))
+
+/**************************************************************************/ /*!
+ * @brief Stream descriptor associated with the serial port 9.
+ * @see FNET_SERIAL_STREAM_DEFAULT
+ ******************************************************************************/
+#define FNET_SERIAL_STREAM_PORT9    ((fnet_serial_stream_t)(&fnet_serial_stream_port9))
+
+/**************************************************************************/ /*!
+ * @brief Stream descriptor associated with the serial port 10.
+ * @see FNET_SERIAL_STREAM_DEFAULT
+ ******************************************************************************/
+#define FNET_SERIAL_STREAM_PORT10    ((fnet_serial_stream_t)(&fnet_serial_stream_port10))
+
+/**************************************************************************/ /*!
+ * @brief Stream descriptor associated with the serial port 11.
+ * @see FNET_SERIAL_STREAM_DEFAULT
+ ******************************************************************************/
+#define FNET_SERIAL_STREAM_PORT11    ((fnet_serial_stream_t)(&fnet_serial_stream_port11))
+
 
 /**************************************************************************/ /*!
  * @def FNET_SERIAL_STREAM_DEFAULT
@@ -192,8 +234,20 @@ extern const struct fnet_serial_stream fnet_serial_stream_port5;
     #define FNET_SERIAL_STREAM_DEFAULT     FNET_SERIAL_STREAM_PORT4
 #elif (FNET_CFG_CPU_SERIAL_PORT_DEFAULT == 5u)
     #define FNET_SERIAL_STREAM_DEFAULT     FNET_SERIAL_STREAM_PORT5
+#elif (FNET_CFG_CPU_SERIAL_PORT_DEFAULT == 6u)
+    #define FNET_SERIAL_STREAM_DEFAULT     FNET_SERIAL_STREAM_PORT6
+#elif (FNET_CFG_CPU_SERIAL_PORT_DEFAULT == 7u)
+    #define FNET_SERIAL_STREAM_DEFAULT     FNET_SERIAL_STREAM_PORT7
+#elif (FNET_CFG_CPU_SERIAL_PORT_DEFAULT == 8u)
+    #define FNET_SERIAL_STREAM_DEFAULT     FNET_SERIAL_STREAM_PORT8
+#elif (FNET_CFG_CPU_SERIAL_PORT_DEFAULT == 9u)
+    #define FNET_SERIAL_STREAM_DEFAULT     FNET_SERIAL_STREAM_PORT9
+#elif (FNET_CFG_CPU_SERIAL_PORT_DEFAULT == 10u)
+    #define FNET_SERIAL_STREAM_DEFAULT     FNET_SERIAL_STREAM_PORT10
+#elif (FNET_CFG_CPU_SERIAL_PORT_DEFAULT == 11u)
+    #define FNET_SERIAL_STREAM_DEFAULT     FNET_SERIAL_STREAM_PORT11
 #else
-    #error "The serial library defines only 6 ports."
+    #error "The serial library defines only 12 ports."
 #endif
 
 #if defined(__cplusplus)

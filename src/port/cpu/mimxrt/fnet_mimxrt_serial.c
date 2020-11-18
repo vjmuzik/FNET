@@ -27,22 +27,23 @@
 #if FNET_MIMXRT
 
 #include "fnet.h"
+#include "fnet_mimxrt_serial.h"
 
 /********************************************************************/
-fnet_return_t fnet_cpu_serial_init(fnet_index_t port_number, fnet_uint32_t baud_rate)  //TODO
+fnet_return_t fnet_cpu_serial_init(fnet_index_t port_number, fnet_uint32_t baud_rate)
 {
-    return FNET_OK;
+    return fnet_mimxrt_serial_init(port_number, baud_rate);
 }
 
 /********************************************************************/
-void fnet_cpu_serial_putchar (fnet_index_t port_number, fnet_char_t character)  //TODO
+void fnet_cpu_serial_putchar (fnet_index_t port_number, fnet_char_t character)
 {
-
+    fnet_mimxrt_serial_putchar(port_number, character);
 }
 /********************************************************************/
-fnet_int32_t fnet_cpu_serial_getchar (fnet_index_t port_number)  //TODO
+fnet_int32_t fnet_cpu_serial_getchar (fnet_index_t port_number)
 {
-    return FNET_OK;
+    return fnet_mimxrt_serial_getchar(port_number);
 }
 
 #endif /*FNET_MIMXRT*/

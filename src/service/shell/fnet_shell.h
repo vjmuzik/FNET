@@ -191,9 +191,9 @@ typedef struct
     fnet_index_t                max_args;       /**< @brief Maximum number of arguments the command accepts.*/
     fnet_shell_cmd_function_t   cmd_ptr;        /**< @brief Pointer to the actual command function defined by
                                                 *   the @ref fnet_shell_cmd_function_t type    */
-    fnet_char_t                 *description;   /**< @brief Brief description of the command (null-terminated string). @n
+    const fnet_char_t           *description;   /**< @brief Brief description of the command (null-terminated string). @n
                                                 * This field is used by the @ref fnet_shell_help() function.@n*/
-    fnet_char_t                 *syntax;        /**< @brief Syntax of the command (null-terminated string). @n
+    const fnet_char_t           *syntax;        /**< @brief Syntax of the command (null-terminated string). @n
                                                 * This field is used by the @ref fnet_shell_help() function.
                                                 * The standard command line syntax information
                                                 * which will be helpful to describe the possible command
@@ -220,7 +220,7 @@ typedef struct
     const fnet_shell_command_t      *cmd_table;     /**< @brief The pointer to the command table.@n
                                                     * The last table element must have all fields
                                                     * set to zero as the end-of-table mark.*/
-    fnet_char_t                     *prompt_str;    /**< @brief Shell prompt (null-terminated string).*/
+    const fnet_char_t                     *prompt_str;    /**< @brief Shell prompt (null-terminated string).*/
     void (*shell_init)( fnet_shell_desc_t shell_desc );/**< @brief Routine called during the shell initialization.
                                                     * It's called by the @ref fnet_shell_init() function.@n
                                                     * This parameter is optional and can be set to @c 0.*/

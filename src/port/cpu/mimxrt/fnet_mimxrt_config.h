@@ -104,7 +104,7 @@
     *  Default serial port number.
     ******************************************************************************/
     #ifndef FNET_CFG_CPU_SERIAL_PORT_DEFAULT
-        #define FNET_CFG_CPU_SERIAL_PORT_DEFAULT        (1U)
+        #define FNET_CFG_CPU_SERIAL_PORT_DEFAULT        (0U)
     #endif
 
     /*******************************************************************************

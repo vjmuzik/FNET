@@ -80,6 +80,54 @@ const struct fnet_serial_stream fnet_serial_stream_port5 =
     0
 };
 
+const struct fnet_serial_stream fnet_serial_stream_port6 =
+{
+    6,
+    fnet_cpu_serial_putchar,
+    fnet_cpu_serial_getchar,
+    0
+};
+
+const struct fnet_serial_stream fnet_serial_stream_port7 =
+{
+    7,
+    fnet_cpu_serial_putchar,
+    fnet_cpu_serial_getchar,
+    0
+};
+
+const struct fnet_serial_stream fnet_serial_stream_port8 =
+{
+    8,
+    fnet_cpu_serial_putchar,
+    fnet_cpu_serial_getchar,
+    0
+};
+
+const struct fnet_serial_stream fnet_serial_stream_port9 =
+{
+    9,
+    fnet_cpu_serial_putchar,
+    fnet_cpu_serial_getchar,
+    0
+};
+
+const struct fnet_serial_stream fnet_serial_stream_port10 =
+{
+    10,
+    fnet_cpu_serial_putchar,
+    fnet_cpu_serial_getchar,
+    0
+};
+
+const struct fnet_serial_stream fnet_serial_stream_port11 =
+{
+    11,
+    fnet_cpu_serial_putchar,
+    fnet_cpu_serial_getchar,
+    0
+};
+
 /********************************************************************/
 void fnet_serial_putchar(fnet_serial_stream_t stream, fnet_char_t character)
 {

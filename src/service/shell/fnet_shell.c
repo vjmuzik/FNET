@@ -229,8 +229,7 @@ static void _fnet_shell_poll( void *shell_if_p )
                             fnet_shell_println((fnet_shell_desc_t)shell_if_p, FNET_SHELL_ERR_SYNTAX, argv[0]);
                         }
                     }
-
-                    if(cur_command->name == 0)
+                    else
                     {
                         fnet_shell_println((fnet_shell_desc_t)shell_if_p, FNET_SHELL_ERR_CMD, argv[0]);
                     }
