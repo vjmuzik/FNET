@@ -842,6 +842,30 @@
 #endif
 
 /**************************************************************************/ /*!
+ * @def      FNET_CFG_CPU_ETH_ADJUSTABLE_TIMER
+ * @brief    Ethernet Adjustable Timer
+ *               - @c 1 = Current platform has the Ethernet Adjustable Timer .
+ *               - @c 0 = Current platform does not have Ethernet Adjustable Timer
+ *              @n NOTE: Valid only if @ref FNET_CFG_CPU_ETH_ENHANCED_BUFFER_DESCRIPTOR is set.
+******************************************************************************/
+#ifndef FNET_CFG_CPU_ETH_ADJUSTABLE_TIMER
+    #define FNET_CFG_CPU_ETH_ADJUSTABLE_TIMER       (0)
+#endif
+
+/**************************************************************************
+* Ethernet Enhanced Buffer Descriptor
+******************************************************************************/
+/**************************************************************************/ /*!
+ * @def      FNET_CFG_CPU_ETH_ENHANCED_BUFFER_DESCRIPTOR
+ * @brief    Enhanced Buffer Descriptor
+ *               - @c 1 = Current platform has support for Ethernet Enhanced Buffer Descriptors.
+ *               - @c 0 = Current platform does not have support for Ethernet Enhanced Buffer Descriptors
+******************************************************************************/
+#ifndef FNET_CFG_CPU_ETH_ENHANCED_BUFFER_DESCRIPTOR
+    #define FNET_CFG_CPU_ETH_ENHANCED_BUFFER_DESCRIPTOR     (0)
+#endif
+
+/**************************************************************************/ /*!
  * @def      FNET_CFG_CPU_ETH_MIB
  * @brief    Ethernet Management Information Base (MIB) Block Counters:
  *               - @c 1 = Current platform has the Ethernet MIB Block.
@@ -981,6 +1005,9 @@
 #endif
 #ifdef FNET_CFG_ETH_MAC_ADDR
     #error "FNET_CFG_ETH_MAC_ADDR parameter is obsolete. It is user application parameter now."
+#endif
+#if FNET_CFG_CPU_ETH_ADJUSTABLE_TIMER && !(FNET_CFG_CPU_ETH_ENHANCED_BUFFER_DESCRIPTOR)
+    #error "FNET_CFG_CPU_ETH_ENHANCED_BUFFER_DESCRIPTOR needs to be enabled to use FNET_CFG_CPU_ETH_ADJUSTABLE_TIMER."
 #endif
 
 #endif /* _FNET_CPU_CONFIG_H_ */

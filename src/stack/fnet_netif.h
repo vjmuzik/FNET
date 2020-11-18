@@ -1055,6 +1055,26 @@ void fnet_netif_release(fnet_netif_desc_t netif_desc);
  ******************************************************************************/
 fnet_bool_t fnet_netif_is_initialized(fnet_netif_desc_t netif_desc);
 
+/***************************************************************************/ /*!
+*
+* @brief    Retrieves the adjustable timer value of the specified network interface.
+*
+* @param netif_desc  Network interface descriptor.
+*
+* @return This function returns:
+*          - Adjustable timer value.
+*
+******************************************************************************
+*
+* This function is used to retrieve the adjustable timer value of the given interface.
+*
+******************************************************************************/
+#if FNET_CFG_CPU_ETH_ADJUSTABLE_TIMER
+fnet_uint32_t fnet_netif_get_adjustable_timer( fnet_netif_desc_t netif_desc );
+void fnet_netif_set_timestamp(fnet_netif_desc_t netif_desc, fnet_int32_t timestamp);
+fnet_int32_t fnet_netif_get_timestamp(fnet_netif_desc_t netif_desc);
+#endif /*FNET_CFG_CPU_ADJUSTABLE_TIMER*/
+
 #if defined(__cplusplus)
 }
 #endif

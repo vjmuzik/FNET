@@ -198,8 +198,78 @@ static const fnet_eth_prot_if_t fnet_eth_prot_if_list[] =
 #endif
 
 /************************************************************************
+* DESCRIPTION: Eth. input function with timestamping.
+*************************************************************************/
+#if FNET_CFG_CPU_ETH_ADJUSTABLE_TIMER
+void _fnet_eth_input( fnet_netif_t *netif, fnet_uint8_t *frame, fnet_size_t frame_size, fnet_int32_t timestamp, fnet_uint32_t timestamp_ns)
+{
+    fnet_index_t        i;
+    fnet_eth_header_t   *ethheader = (fnet_eth_header_t *)frame; /* Point to the ethernet header.*/
+    fnet_mac_addr_t     local_mac_addr;
+    fnet_netbuf_t       *nb = 0;
+    fnet_uint16_t       protocol_type;
+
+    if(netif && frame && (frame_size > sizeof(fnet_eth_header_t)))
+    {
+        if(_fnet_netif_get_hw_addr(netif, local_mac_addr, sizeof(local_mac_addr)) != FNET_OK)
+        {
+            goto DROP;
+        }
+        /* Just ignore our own "bounced" frames.*/
+        if(fnet_memcmp(ethheader->source_addr, local_mac_addr, sizeof(local_mac_addr)) == 0)
+        {
+            goto DROP;
+        }
+
+        fnet_eth_trace("\nRX", ethheader); /* Print ETH header.*/
+
+        nb = _fnet_netbuf_from_buf( ((fnet_uint8_t *)ethheader + sizeof(fnet_eth_header_t)),
+                                    (frame_size - sizeof(fnet_eth_header_t)), FNET_TRUE );
+        if(nb)
+        {
+            if(FNET_MAC_ADDR_IS_BROADCAST(ethheader->destination_addr))    /* Broadcast */
+            {
+                nb->flags |= FNET_NETBUF_FLAG_BROADCAST;
+            }
+
+            if(FNET_MAC_ADDR_IS_MULTICAST(ethheader->destination_addr)) /* Multicast */
+            {
+                nb->flags |= FNET_NETBUF_FLAG_MULTICAST;
+            }
+            
+            nb->timestamp = timestamp;  /*Copy timestamp*/
+            nb->timestamp_ns = timestamp_ns;  /*Copy timestamp_ns*/
+            nb->flags |= FNET_NETBUF_FLAG_TIMESTAMP;    /*Flag timestamp available*/
+
+            /* Network-layer input (IPv4/6, ARP).*/
+            protocol_type = ethheader->type;
+
+            /* Find Network-layer protocol.*/
+            for(i = 0U; i < FNET_ETH_PROT_IF_LIST_SIZE; i++)
+            {
+                if(protocol_type == fnet_eth_prot_if_list[i].protocol)
+                {
+                    /* Call the protocol-input function.*/
+                    fnet_eth_prot_if_list[i].input(netif, nb);
+                    break;
+                }
+            }
+
+            if(i == FNET_ETH_PROT_IF_LIST_SIZE)
+            {
+                /* No protocol found */
+                _fnet_netbuf_free_chain(nb);
+            }
+        }
+    }
+DROP:
+    return;
+}
+
+/************************************************************************
 * DESCRIPTION: Eth. input function.
 *************************************************************************/
+#else /*FNET_CFG_CPU_ETH_ADJUSTABLE_TIMER*/
 void _fnet_eth_input( fnet_netif_t *netif, fnet_uint8_t *frame, fnet_size_t frame_size)
 {
     fnet_index_t        i;
@@ -260,6 +330,7 @@ void _fnet_eth_input( fnet_netif_t *netif, fnet_uint8_t *frame, fnet_size_t fram
 DROP:
     return;
 }
+#endif /*FNET_CFG_CPU_ETH_ADJUSTABLE_TIMER*/
 
 /************************************************************************
 * DESCRIPTION: Ethernet low-level output function.

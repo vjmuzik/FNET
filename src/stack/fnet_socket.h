@@ -668,9 +668,13 @@ typedef enum
     MSG_PEEK      = (0x2U),  /**< @brief Receive a copy of the
                              * data without consuming it.
                              */
-    MSG_DONTROUTE = (0x4U)   /**< @brief Send without using
+    MSG_DONTROUTE = (0x4U),   /**< @brief Send without using
                              * routing tables.
                              */
+    MSG_TIMESTAMP = (0x8U),   /**< @brief Send and timestamp frame.
+                            *   This option is avalable only if
+                            *   socket is UDP.
+                              */
 } fnet_msg_flags_t;
 
 /**************************************************************************/ /*!
@@ -1038,6 +1042,13 @@ fnet_ssize_t fnet_socket_recv( fnet_socket_t s, void *buf, fnet_size_t len, fnet
  *
  ******************************************************************************/
 fnet_ssize_t fnet_socket_recvfrom( fnet_socket_t s, void *buf, fnet_size_t len, fnet_flag_t flags, struct fnet_sockaddr *from, fnet_size_t *fromlen );
+
+#if FNET_CFG_CPU_ETH_ADJUSTABLE_TIMER
+fnet_int32_t fnet_socket_recv_timestamp(fnet_socket_t s);
+fnet_int32_t fnet_socket_send_timestamp(fnet_socket_t s);
+fnet_uint32_t fnet_socket_recv_timestamp_ns(fnet_socket_t s);
+fnet_uint32_t fnet_socket_send_timestamp_ns(fnet_socket_t s);
+#endif
 
 /***************************************************************************/ /*!
  *

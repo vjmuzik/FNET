@@ -1126,6 +1126,129 @@ fnet_ssize_t fnet_socket_recv( fnet_socket_t s, void *buf, fnet_size_t len, fnet
     return fnet_socket_recvfrom(s, buf, len, flags, FNET_NULL, FNET_NULL);
 }
 
+#if FNET_CFG_CPU_ETH_ADJUSTABLE_TIMER
+fnet_int32_t fnet_socket_recv_timestamp(fnet_socket_t s){
+    fnet_socket_if_t   *sock;
+        fnet_uint32_t   result = 0;
+        fnet_error_t    error;
+
+        _fnet_stack_mutex_lock();
+
+        if((sock = _fnet_socket_desc_find(s)) != 0)
+        {
+            if((sock->protocol_interface) && (sock->protocol_interface->socket_api->prot_rcv_timestamp))
+            {
+                result = sock->protocol_interface->socket_api->prot_rcv_timestamp(sock);
+            }
+        }
+        else
+        {
+            error = FNET_ERR_BAD_DESC; /* Bad descriptor.*/
+            goto ERROR;
+        }
+
+        _fnet_stack_mutex_unlock();
+
+        return (result);
+    ERROR:
+        fnet_error_set(error);
+
+        _fnet_stack_mutex_unlock();
+
+        return (0);
+}
+fnet_int32_t fnet_socket_send_timestamp(fnet_socket_t s){
+    fnet_socket_if_t   *sock;
+        fnet_uint32_t   result = 0;
+        fnet_error_t    error;
+
+        _fnet_stack_mutex_lock();
+
+        if((sock = _fnet_socket_desc_find(s)) != 0)
+        {
+            if((sock->protocol_interface) && (sock->protocol_interface->socket_api->prot_snd_timestamp))
+            {
+                result = sock->protocol_interface->socket_api->prot_snd_timestamp(sock);
+            }
+        }
+        else
+        {
+            error = FNET_ERR_BAD_DESC; /* Bad descriptor.*/
+            goto ERROR;
+        }
+
+        _fnet_stack_mutex_unlock();
+
+        return (result);
+    ERROR:
+        fnet_error_set(error);
+
+        _fnet_stack_mutex_unlock();
+
+        return (0);
+}
+fnet_uint32_t fnet_socket_recv_timestamp_ns(fnet_socket_t s){
+    fnet_socket_if_t   *sock;
+        fnet_uint32_t   result = 0;
+        fnet_error_t    error;
+
+        _fnet_stack_mutex_lock();
+
+        if((sock = _fnet_socket_desc_find(s)) != 0)
+        {
+            if((sock->protocol_interface) && (sock->protocol_interface->socket_api->prot_rcv_timestamp_ns))
+            {
+                result = sock->protocol_interface->socket_api->prot_rcv_timestamp_ns(sock);
+            }
+        }
+        else
+        {
+            error = FNET_ERR_BAD_DESC; /* Bad descriptor.*/
+            goto ERROR;
+        }
+
+        _fnet_stack_mutex_unlock();
+
+        return (result);
+    ERROR:
+        fnet_error_set(error);
+
+        _fnet_stack_mutex_unlock();
+
+        return (0);
+}
+fnet_uint32_t fnet_socket_send_timestamp_ns(fnet_socket_t s){
+    fnet_socket_if_t   *sock;
+        fnet_uint32_t   result = 0;
+        fnet_error_t    error;
+
+        _fnet_stack_mutex_lock();
+
+        if((sock = _fnet_socket_desc_find(s)) != 0)
+        {
+            if((sock->protocol_interface) && (sock->protocol_interface->socket_api->prot_snd_timestamp_ns))
+            {
+                result = sock->protocol_interface->socket_api->prot_snd_timestamp_ns(sock);
+            }
+        }
+        else
+        {
+            error = FNET_ERR_BAD_DESC; /* Bad descriptor.*/
+            goto ERROR;
+        }
+
+        _fnet_stack_mutex_unlock();
+
+        return (result);
+    ERROR:
+        fnet_error_set(error);
+
+        _fnet_stack_mutex_unlock();
+
+        return (0);
+}
+#endif
+
 /************************************************************************
 * DESCRIPTION: This function retrieves the current name
 *              for the specified socket.

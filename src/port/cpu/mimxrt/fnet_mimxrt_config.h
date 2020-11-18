@@ -87,6 +87,20 @@
     #endif
 
     /**************************************************************************
+    * Ethernet Adjustable Timer
+    ******************************************************************************/
+    #ifndef FNET_CFG_CPU_ETH_ADJUSTABLE_TIMER
+        #define FNET_CFG_CPU_ETH_ADJUSTABLE_TIMER       (0)
+    #endif
+
+    /**************************************************************************
+    * Ethernet Enhanced Buffer Descriptor
+    ******************************************************************************/
+    #ifndef FNET_CFG_CPU_ETH_ENHANCED_BUFFER_DESCRIPTOR
+        #define FNET_CFG_CPU_ETH_ENHANCED_BUFFER_DESCRIPTOR     (0)
+    #endif
+
+    /**************************************************************************
     *  Default serial port number.
     ******************************************************************************/
     #ifndef FNET_CFG_CPU_SERIAL_PORT_DEFAULT

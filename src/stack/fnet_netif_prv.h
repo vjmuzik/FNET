@@ -127,6 +127,11 @@ typedef struct fnet_netif_api
 #if FNET_CFG_IP6
     void                (*netif_output_ip6)(struct fnet_netif *netif, const fnet_ip6_addr_t *src_ip_addr,  const fnet_ip6_addr_t *dest_ip_addr, fnet_netbuf_t *nb); /* IPv6 Transmit function.*/
 #endif
+#if FNET_CFG_CPU_ETH_ADJUSTABLE_TIMER
+    fnet_uint32_t       (*netif_get_adjustable_timer)(struct fnet_netif *netif);
+    void                (*netif_set_timestamp)(struct fnet_netif *netif, fnet_int32_t timestamp);
+    fnet_int32_t        (*netif_get_timestamp)(struct fnet_netif *netif);
+#endif /*FNET_CFG_CPU_ADJUSTABLE_TIMER*/
     union                /* Points to interface specific API structure (Optional). */
     {
         const struct fnet_wifi_api   *wifi_api;  /* netif_type = FNET_NETIF_TYPE_WIFI */
@@ -177,6 +182,10 @@ typedef struct fnet_netif
     fnet_timer_desc_t       pmtu_timer;                         /* PMTU timer,used to detect increases in PMTU.*/
 #endif
 #endif /* FNET_CFG_IP6 */
+#if FNET_CFG_CPU_ETH_ADJUSTABLE_TIMER
+    void                    (*netif_send_timestamp_callback)(fnet_int32_t timestamp, fnet_uint32_t timestamp_ns, void* cookie);
+    void*                   netif_send_timestamp_callback_cookie;
+#endif /*FNET_CFG_CPU_ADJUSTABLE_TIMER*/
 } fnet_netif_t;
 
 /************************************************************************
@@ -235,6 +244,11 @@ void _fnet_netif_set_pmtu(fnet_netif_t *netif, fnet_size_t pmtu);
 void _fnet_netif_join_ip6_multicast (fnet_netif_desc_t netif_desc, const fnet_ip6_addr_t *multicast_addr);
 void _fnet_netif_leave_ip6_multicast (fnet_netif_desc_t netif_desc, fnet_ip6_addr_t *multicast_addr);
 #endif /* FNET_CFG_IP6 */
+#if FNET_CFG_CPU_ETH_ADJUSTABLE_TIMER
+fnet_uint32_t _fnet_netif_get_adjustable_timer( fnet_netif_desc_t netif_desc );
+void _fnet_netif_set_timestamp(fnet_netif_desc_t netif_desc, fnet_int32_t timestamp);
+fnet_int32_t _fnet_netif_get_timestamp(fnet_netif_desc_t netif_desc);
+#endif /*FNET_CFG_CPU_ADJUSTABLE_TIMER*/
 
 #if defined(__cplusplus)
 }

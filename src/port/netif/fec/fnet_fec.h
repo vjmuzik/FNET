@@ -339,7 +339,7 @@ typedef struct
     volatile fnet_uint32_t IEEE_R_FDXFC;
     volatile fnet_uint32_t IEEE_R_OCTETS_OK;
 #endif
-#if 0 /* Not used. Present in Panther, Kinetis, Modelo, i.MX-RT.*/
+#if FNET_CFG_CPU_ETH_ADJUSTABLE_TIMER /* Not used. Present in Panther, Kinetis, Modelo, i.MX-RT.*/
     volatile fnet_uint32_t RESERVED_18[71];
     volatile fnet_uint32_t ATCR;                   /* Timer Control Register, offset: 0x400 */
     volatile fnet_uint32_t ATVR;                   /* Timer Value Register, offset: 0x404 */
@@ -361,6 +361,10 @@ typedef struct
 fnet_fec_reg_t;
 
 /* Bit definitions and macros for FNET_FEC_EIR */
+#define FNET_FEC_EIR_TS_TIMER            (0x00008000U)
+#define FNET_FEC_EIR_TS_AVAIL            (0x00010000U)
+#define FNET_FEC_EIR_WAKEUP              (0x00020000U)
+#define FNET_FEC_EIR_PLR                 (0x00040000U)
 #define FNET_FEC_EIR_UN                  (0x00080000U)
 #define FNET_FEC_EIR_RL                  (0x00100000U)
 #define FNET_FEC_EIR_LC                  (0x00200000U)
@@ -378,6 +382,10 @@ fnet_fec_reg_t;
 #endif
 
 /* Bit definitions and macros for FNET_FEC_EIMR */
+#define FNET_FEC_EIMR_TS_TIMER           (0x00008000U)
+#define FNET_FEC_EIMR_TS_AVAIL           (0x00010000U)
+#define FNET_FEC_EIMR_WAKEUP             (0x00020000U)
+#define FNET_FEC_EIMR_PLR                (0x00040000U)
 #define FNET_FEC_EIMR_UN                 (0x00080000U)
 #define FNET_FEC_EIMR_RL                 (0x00100000U)
 #define FNET_FEC_EIMR_LC                 (0x00200000U)
@@ -404,7 +412,7 @@ fnet_fec_reg_t;
 #define FNET_FEC_ECR_RESET               (0x00000001U)
 #define FNET_FEC_ECR_ETHER_EN            (0x00000002U)
 
-#if FNET_CFG_CPU_S32R274
+#if FNET_CFG_CPU_S32R274 || FNET_CFG_CPU_ETH_ADJUSTABLE_TIMER
     #define FNET_FEC_ECR_MAGICEN        (0x00000004U)
     #define FNET_FEC_ECR_SLEEP          (0x00000008U)
     #define FNET_FEC_ECR_EN1588         (0x00000010U)
@@ -556,13 +564,90 @@ fnet_fec_reg_t;
     #define FNET_FEC_TX_BD_CSL      (0x0001U)
 #endif
 
+#if FNET_CFG_CPU_ETH_ADJUSTABLE_TIMER
+// ----------------------------------------------------------------------
+// TX Enhanced BD Bit Definitions
+
+# define FNET_FEC_TX_BD_INT       0x40000000
+# define FNET_FEC_TX_BD_TS        0x20000000
+# define FNET_FEC_TX_BD_PINS      0x10000000
+# define FNET_FEC_TX_BD_IINS      0x08000000
+# define FNET_FEC_TX_BD_TXE       0x00008000
+# define FNET_FEC_TX_BD_UE        0x00002000
+# define FNET_FEC_TX_BD_EE        0x00001000
+# define FNET_FEC_TX_BD_FE        0x00000800
+# define FNET_FEC_TX_BD_LCE       0x00000400
+# define FNET_FEC_TX_BD_OE        0x00000200
+# define FNET_FEC_TX_BD_TSE       0x00000100
+
+# define FNET_FEC_TX_BD_BDU       0x80000000
+
+// ----------------------------------------------------------------------
+// RX Enhanced BD Bit Definitions
+
+# define FNET_FEC_RX_BD_ME       0x80000000
+# define FNET_FEC_RX_BD_PE       0x04000000
+# define FNET_FEC_RX_BD_CE       0x02000000
+# define FNET_FEC_RX_BD_UC       0x01000000
+# define FNET_FEC_RX_BD_INT      0x00800000
+# define FNET_FEC_RX_BD_ICE      0x00000020
+# define FNET_FEC_RX_BD_PCR      0x00000010
+# define FNET_FEC_RX_BD_VLAN     0x00000004
+# define FNET_FEC_RX_BD_IPV6     0x00000002
+# define FNET_FEC_RX_BD_FRAG     0x00000001
+
+# define FNET_FEC_RX_BD_BDU      0x80000000
+
+
+
+#define FNET_FEC_ATCR_EN        (0x0001U)       /* Timer Control Register, offset: 0x400 */
+#define FNET_FEC_ATCR_OFFEN     (0x0004U)
+#define FNET_FEC_ATCR_OFFRST    (0x0008U)
+#define FNET_FEC_ATCR_PEREN     (0x0010U)
+#define FNET_FEC_ATCR_RESERVED  (0x0020U)
+#define FNET_FEC_ATCR_PINPER    (0x0080U)
+#define FNET_FEC_ATCR_RESTART   (0x0200U)
+#define FNET_FEC_ATCR_CAPTURE   (0x0800U)
+#define FNET_FEC_ATCR_SLAVE     (0x2000U)
+
+#define FNET_FEC_ATCOR_COR      (0x7FFFFFFFU)   /* Timer Correction Register, offset: 0x410 */
+
+#define FNET_FEC_ATINC_INC      (0x007FU)       /* Time-Stamping Clock Period Register, offset: 0x414 */
+#define FNET_FEC_ATINC_INC_CORR (0x7F00U)
+#define FNET_FEC_ATINC_INC_CORR_OFFSET(x) ((x << 8) & FNET_FEC_ATINC_INC_CORR)
+
+#define FNET_FEC_TGSR_TF0       (0x0001U)       /* Timer Global Status Register, offset: 0x604 */
+#define FNET_FEC_TGSR_TF1       (0x0002U)
+#define FNET_FEC_TGSR_TF2       (0x0004U)
+#define FNET_FEC_TGSR_TF3       (0x0008U)
+
+#define FNET_FEC_TCSR_TDRE      (0x0001U)       /*!< Timer Control Status Register, array offset: 0x608, array step: 0x8 */
+#define FNET_FEC_TCSR_TMODE     (0x003CU)
+#define FNET_FEC_TCSR_TIE       (0x0040U)
+#define FNET_FEC_TCSR_TF        (0x0080U)
+#define FNET_FEC_TCSR_TPWC      (0xF800U)
+#endif /*FNET_CFG_CPU_ETH_ADJUSTABLE_TIMER*/
+
 /* Ethernet Buffer descriptor */
 FNET_COMP_PACKED_BEGIN
-typedef struct
+typedef struct                                           /* 32 bit Big Endian*/
 {
     volatile fnet_uint16_t  status FNET_COMP_PACKED;     /* Control and status info.*/
     volatile fnet_uint16_t  length FNET_COMP_PACKED;     /* Data length.*/
     volatile fnet_uint8_t   *buf_ptr FNET_COMP_PACKED;   /* Buffer pointer.*/
+#if FNET_CFG_CPU_ETH_ENHANCED_BUFFER_DESCRIPTOR          /* Enhanced Buffer Descriptors*/
+    volatile fnet_uint32_t  status2 FNET_COMP_PACKED;
+
+    volatile fnet_uint16_t  hdrlen_proto FNET_COMP_PACKED;
+    volatile fnet_uint16_t  checksum FNET_COMP_PACKED;
+
+    volatile fnet_uint32_t  bdu FNET_COMP_PACKED;
+
+    volatile fnet_uint32_t  timestamp FNET_COMP_PACKED;
+
+    volatile fnet_uint32_t  reserved1 FNET_COMP_PACKED;
+    volatile fnet_uint32_t  reserved2 FNET_COMP_PACKED;
+#endif
 }
 fnet_fec_buf_desc_t;
 FNET_COMP_PACKED_END
@@ -584,6 +669,8 @@ typedef struct
     volatile fnet_fec_reg_t     *reg;               /* Pointer to the eth registers. */
     volatile fnet_fec_reg_t     *reg_phy;           /* Pointer to the eth registers, used for comunication with phy. */
     fnet_uint32_t               vector_number;      /* Vector number of the Ethernet Receive Frame interrupt.*/
+    fnet_uint32_t               isr_holder;         /* Clear interrupts and store here for use in bottom isr*/
+    fnet_int32_t                timestamp;          /* Seconds value generated from ATPER interrupt triggered every 1,000,000,000ns*/
 
     fnet_fec_buf_desc_t         *tx_buf_desc;       /* Tx Buffer Descriptors.*/
     fnet_fec_buf_desc_t         *rx_buf_desc;       /* Rx Buffer Descriptors.*/

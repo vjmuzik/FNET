@@ -50,17 +50,15 @@ static fnet_error_t _fnet_raw_output(struct fnet_sockaddr *src_addr, const struc
  ************************************************************************/
 static const fnet_socket_prot_if_t fnet_raw_socket_api =
 {
-    FNET_FALSE,              /* Flag that protocol is connection oriented.*/
-    _fnet_raw_attach,        /* Protocol "attach" function.*/
-    _fnet_raw_detach,        /* Protocol "detach" function.*/
-    _fnet_raw_connect,       /* Protocol "connect" function.*/
-    0,                      /* Protocol "accept" function.*/
-    _fnet_raw_rcv,           /* Protocol "receive" function.*/
-    _fnet_raw_snd,           /* Protocol "send" function.*/
-    _fnet_raw_shutdown,      /* Protocol "shutdown" function.*/
-    _fnet_ip_setsockopt,     /* Protocol "setsockopt" function.*/
-    _fnet_ip_getsockopt,     /* Protocol "getsockopt" function.*/
-    0,                      /* Protocol "listen" function.*/
+    .con_req = FNET_FALSE,              /* Flag that protocol is connection oriented.*/
+    .prot_attach = _fnet_raw_attach,        /* Protocol "attach" function.*/
+    .prot_detach = _fnet_raw_detach,        /* Protocol "detach" function.*/
+    .prot_connect = _fnet_raw_connect,       /* Protocol "connect" function.*/
+    .prot_rcv = _fnet_raw_rcv,           /* Protocol "receive" function.*/
+    .prot_snd = _fnet_raw_snd,           /* Protocol "send" function.*/
+    .prot_shutdown = _fnet_raw_shutdown,      /* Protocol "shutdown" function.*/
+    .prot_setsockopt = _fnet_ip_setsockopt,     /* Protocol "setsockopt" function.*/
+    .prot_getsockopt = _fnet_ip_getsockopt,     /* Protocol "getsockopt" function.*/
 };
 
 fnet_prot_if_t fnet_raw_prot_if =

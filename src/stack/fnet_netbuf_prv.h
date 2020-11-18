@@ -38,7 +38,8 @@ typedef enum
     FNET_NETBUF_FLAG_BROADCAST              = 0x02u,     /* Send/received as link-level broadcast. */
     FNET_NETBUF_FLAG_MULTICAST              = 0x04u,     /* Send/received as link-level multicast. */
     FNET_NETBUF_FLAG_HW_IP_CHECKSUM         = 0x10u,     /* IPv4 header checksum is calculated/checked by HW.*/
-    FNET_NETBUF_FLAG_HW_PROTOCOL_CHECKSUM   = 0x20u      /* Protocol (UDP, TCP, ICMP) checksum is calculated/checked by HW.*/
+    FNET_NETBUF_FLAG_HW_PROTOCOL_CHECKSUM   = 0x20u,     /* Protocol (UDP, TCP, ICMP) checksum is calculated/checked by HW.*/
+    FNET_NETBUF_FLAG_TIMESTAMP              = 0x40u      /* Contains a timestamp. */
 } fnet_netbuf_flag_t;
 
 /**************************************************************************/ /*!
@@ -66,6 +67,10 @@ typedef struct fnet_netbuf
     fnet_size_t         length;         /**< amount of actual data in this net_buf */
     fnet_size_t         total_length;   /**< length of buffer + additionally chained buffers (only for first netbuf)*/
     fnet_flag_t         flags;
+#if FNET_CFG_CPU_ETH_ADJUSTABLE_TIMER
+    fnet_int32_t        timestamp;
+    fnet_uint32_t       timestamp_ns;
+#endif /*FNET_CFG_CPU_ETH_ADJUSTABLE_TIMER*/
 } fnet_netbuf_t;
 
 #define FNET_NETBUF_COPYALL   ((fnet_size_t)(-1))

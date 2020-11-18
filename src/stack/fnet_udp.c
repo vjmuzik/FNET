@@ -39,6 +39,13 @@ static fnet_return_t _fnet_udp_detach( fnet_socket_if_t *sk );
 static fnet_return_t _fnet_udp_connect( fnet_socket_if_t *sk, struct fnet_sockaddr *foreign_addr);
 static fnet_ssize_t _fnet_udp_snd( fnet_socket_if_t *sk, const fnet_uint8_t *buf, fnet_size_t len, fnet_flag_t flags, const struct fnet_sockaddr *addr);
 static fnet_ssize_t _fnet_udp_rcv(fnet_socket_if_t *sk, fnet_uint8_t *buf, fnet_size_t len, fnet_flag_t flags, struct fnet_sockaddr *addr);
+#if FNET_CFG_CPU_ETH_ADJUSTABLE_TIMER
+static fnet_int32_t _fnet_udp_rcv_timestamp(fnet_socket_if_t *sk);
+static fnet_int32_t _fnet_udp_snd_timestamp(fnet_socket_if_t *sk);
+static fnet_uint32_t _fnet_udp_rcv_timestamp_ns(fnet_socket_if_t *sk);
+static fnet_uint32_t _fnet_udp_snd_timestamp_ns(fnet_socket_if_t *sk);
+static void _fnet_udp_snd_timestamp_callback(fnet_int32_t timestamp, fnet_uint32_t timestamp_ns, void* cookie);
+#endif /*FNET_CFG_CPU_ETH_ADJUSTABLE_TIMER*/
 static void _fnet_udp_control_input(fnet_prot_notify_t command, struct fnet_sockaddr *src_addr, struct fnet_sockaddr *dest_addr, fnet_netbuf_t *nb);
 static fnet_return_t _fnet_udp_shutdown( fnet_socket_if_t *sk, fnet_sd_flags_t how );
 static void _fnet_udp_input( fnet_netif_t *netif, struct fnet_sockaddr *foreign_addr, struct fnet_sockaddr *local_addr, fnet_netbuf_t *nb, fnet_netbuf_t *ip_nb);
@@ -65,6 +72,12 @@ static const fnet_socket_prot_if_t fnet_udp_socket_api =
     .prot_detach = _fnet_udp_detach,         /* Protocol "detach" function.*/
     .prot_connect = _fnet_udp_connect,       /* Protocol "connect" function.*/
     .prot_rcv = _fnet_udp_rcv,               /* Protocol "receive" function.*/
+#if FNET_CFG_CPU_ETH_ADJUSTABLE_TIMER
+    .prot_rcv_timestamp = _fnet_udp_rcv_timestamp,  /*Protocol "recieve timestamp".*/
+    .prot_snd_timestamp = _fnet_udp_snd_timestamp,  /*Protocol "send timestamp".*/
+    .prot_rcv_timestamp_ns = _fnet_udp_rcv_timestamp_ns,  /*Protocol "recieve timestamp_ns".*/
+    .prot_snd_timestamp_ns = _fnet_udp_snd_timestamp_ns,  /*Protocol "send timestamp_ns".*/
+#endif /*FNET_CFG_CPU_ETH_ADJUSTABLE_TIMER*/
     .prot_snd = _fnet_udp_snd,               /* Protocol "send" function.*/
     .prot_shutdown = _fnet_udp_shutdown,     /* Protocol "shutdown" function.*/
     .prot_setsockopt = _fnet_ip_setsockopt,  /* Protocol "setsockopt" function.*/
@@ -544,8 +557,43 @@ static fnet_ssize_t _fnet_udp_snd( fnet_socket_if_t *sk, const fnet_uint8_t *buf
         sk->options.so_dontroute = FNET_TRUE;
     }
 
+#if FNET_CFG_CPU_ETH_ADJUSTABLE_TIMER
+    fnet_netif_t                            *netif = FNET_NULL;
+    fnet_scope_id_t                         scope_id = 0u;
+
+    /* Check Scope ID.*/
+    if(foreign_addr->sa_scope_id) /* Take scope id from destination address.*/
+    {
+        scope_id = foreign_addr->sa_scope_id;
+    }
+    else  /* Take scope id from source address.*/
+    {
+        scope_id = sk->local_addr.sa_scope_id;
+    }
+    netif = _fnet_netif_get_default();
+
+    if((flags & MSG_TIMESTAMP) != 0U){
+        nb->flags |= FNET_NETBUF_FLAG_TIMESTAMP;
+        sk->send_ts_avail = FNET_FALSE;
+        netif->netif_send_timestamp_callback = _fnet_udp_snd_timestamp_callback;
+        netif->netif_send_timestamp_callback_cookie = sk;
+    }
+#endif /*FNET_CFG_CPU_ETH_ADJUSTABLE_TIMER*/
+
     error = _fnet_udp_output(&sk->local_addr, foreign_addr, &(sk->options), nb);
 
+#if FNET_CFG_CPU_ETH_ADJUSTABLE_TIMER
+    if((flags & MSG_TIMESTAMP) != 0U){
+        /*send_timestamp handshake, wait
+          for interrupt to tell us we
+          have a timestamp available*/
+        while(!(sk->send_ts_avail)){
+        }
+        sk->send_ts_avail = FNET_FALSE;
+        netif->netif_send_timestamp_callback = NULL;
+        netif->netif_send_timestamp_callback_cookie = NULL;
+    }
+#endif /*FNET_CFG_CPU_ETH_ADJUSTABLE_TIMER*/
     if((flags & MSG_DONTROUTE) != 0u) /* Restore.*/
     {
         sk->options.so_dontroute = flags_save;
@@ -562,6 +610,30 @@ ERROR:
     fnet_isr_unlock();
     return (FNET_ERR);
 }
+
+/************************************************************************
+* DESCRIPTION :UDP send timestamp function.
+*************************************************************************/
+#if FNET_CFG_CPU_ETH_ADJUSTABLE_TIMER
+static fnet_int32_t _fnet_udp_snd_timestamp(fnet_socket_if_t *sk)
+{
+    return sk->send_timestamp;
+}
+
+static fnet_uint32_t _fnet_udp_snd_timestamp_ns(fnet_socket_if_t *sk)
+{
+    return sk->send_timestamp_ns;
+}
+
+static void _fnet_udp_snd_timestamp_callback(fnet_int32_t timestamp, fnet_uint32_t timestamp_ns, void* cookie){
+    if(cookie){
+        fnet_socket_if_t *sk = (fnet_socket_if_t*)cookie;
+        sk->send_timestamp = timestamp;
+        sk->send_timestamp_ns = timestamp_ns;
+        sk->send_ts_avail = FNET_TRUE;
+    }
+}
+#endif /*FNET_CFG_CPU_ETH_ADJUSTABLE_TIMER*/
 
 /************************************************************************
 * DESCRIPTION :UDP receive function.
@@ -584,7 +656,19 @@ static fnet_ssize_t _fnet_udp_rcv(fnet_socket_if_t *sk, fnet_uint8_t *buf, fnet_
 
     if(sk->options.local_error == FNET_ERR_OK)
     {
-
+#if FNET_CFG_CPU_ETH_ADJUSTABLE_TIMER
+        if(sk->receive_buffer.net_buf_chain != 0)
+        {
+            if((sk->receive_buffer.net_buf_chain->flags & FNET_NETBUF_FLAG_TIMESTAMP) != 0){
+                sk->receive_timestamp = sk->receive_buffer.net_buf_chain->timestamp;
+                sk->receive_timestamp_ns = sk->receive_buffer.net_buf_chain->timestamp_ns;
+            }
+            else{
+                sk->receive_timestamp = -1;
+                sk->receive_timestamp_ns = 2000000000U;
+            }
+        }
+#endif /*FNET_CFG_CPU_ETH_ADJUSTABLE_TIMER*/
         length = _fnet_socket_buffer_read_address(&(sk->receive_buffer), buf,
                  len, &foreign_addr, ((flags & MSG_PEEK) == 0u) ? FNET_TRUE : FNET_FALSE);
 
@@ -611,6 +695,21 @@ ERROR:
     _fnet_socket_set_error(sk, error);
     return (FNET_ERR);
 }
+
+/************************************************************************
+* DESCRIPTION :UDP receive timestamp function.
+*************************************************************************/
+#if FNET_CFG_CPU_ETH_ADJUSTABLE_TIMER
+static fnet_int32_t _fnet_udp_rcv_timestamp(fnet_socket_if_t *sk)
+{
+    return sk->receive_timestamp;
+}
+
+static fnet_uint32_t _fnet_udp_rcv_timestamp_ns(fnet_socket_if_t *sk)
+{
+    return sk->receive_timestamp_ns;
+}
+#endif /*FNET_CFG_CPU_ETH_ADJUSTABLE_TIMER*/
 
 /************************************************************************
 * DESCRIPTION: This function processes the ICMP errors.

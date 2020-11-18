@@ -123,7 +123,11 @@ void _fnet_eth_output_ip4(fnet_netif_t *netif, fnet_ip4_addr_t dest_ip_addr, fne
 #endif
 
 void _fnet_eth_output( fnet_netif_t *netif, fnet_uint16_t type, const fnet_mac_addr_t dest_addr, fnet_netbuf_t *nb );
+#if FNET_CFG_CPU_ETH_ADJUSTABLE_TIMER
+void _fnet_eth_input( fnet_netif_t *netif, fnet_uint8_t *frame, fnet_size_t frame_size, fnet_int32_t timestamp, fnet_uint32_t timestamp_ns);
+#else
 void _fnet_eth_input( fnet_netif_t *netif, fnet_uint8_t *frame, fnet_size_t frame_size);
+#endif
 
 fnet_return_t  _fnet_eth_phy_read(fnet_netif_t *netif, fnet_uint32_t reg_addr, fnet_uint16_t *reg_data);
 fnet_return_t  _fnet_eth_phy_write(fnet_netif_t *netif, fnet_uint32_t reg_addr, fnet_uint16_t reg_data);

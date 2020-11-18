@@ -124,7 +124,16 @@ typedef struct _fnet_socket_if_t
     struct _fnet_socket_if_t    *head_con;              /**< Back pointer to accept socket.*/
 
     fnet_socket_buffer_t        receive_buffer;         /**< Socket buffer for incoming data.*/
+    #if FNET_CFG_CPU_ETH_ADJUSTABLE_TIMER
+    fnet_int32_t                receive_timestamp;
+    fnet_uint32_t               receive_timestamp_ns;
+    #endif /*FNET_CFG_CPU_ETH_ADJUSTABLE_TIMER*/
     fnet_socket_buffer_t        send_buffer;            /**< Socket buffer for outgoing data.*/
+    #if FNET_CFG_CPU_ETH_ADJUSTABLE_TIMER
+    volatile fnet_int32_t       send_timestamp;
+    volatile fnet_uint32_t      send_timestamp_ns;
+    volatile fnet_bool_t        send_ts_avail;
+    #endif /*FNET_CFG_CPU_ETH_ADJUSTABLE_TIMER*/
 
     /* Common protocol params.*/
     struct fnet_sockaddr        foreign_addr;           /**< Foreign socket address.*/
@@ -152,9 +161,15 @@ typedef struct fnet_socket_prot_if
     fnet_bool_t     con_req;                                                                                        /* Flag that protocol is connection oriented.*/
     fnet_return_t   (*prot_attach)(fnet_socket_if_t *sk);                                                           /* Protocol "attach" function. */
     fnet_return_t   (*prot_detach)(fnet_socket_if_t *sk);                                                           /* Protocol "detach" function. */
-    fnet_return_t   (*prot_connect)(fnet_socket_if_t *sk, struct fnet_sockaddr *foreign_addr);                           /* Protocol "connect" function. */
+    fnet_return_t   (*prot_connect)(fnet_socket_if_t *sk, struct fnet_sockaddr *foreign_addr);                      /* Protocol "connect" function. */
     fnet_socket_if_t *( *prot_accept)(fnet_socket_if_t *sk);                                                        /* Protocol "accept" function. */
     fnet_ssize_t    (*prot_rcv)(fnet_socket_if_t *sk, fnet_uint8_t *buf, fnet_size_t len, fnet_flag_t flags, struct fnet_sockaddr *foreign_addr );        /* Protocol "receive" function. */
+#if FNET_CFG_CPU_ETH_ADJUSTABLE_TIMER
+    fnet_int32_t   (*prot_rcv_timestamp)(fnet_socket_if_t *sk);                                                     /* Protocol "receive timestamp" function. */
+    fnet_int32_t   (*prot_snd_timestamp)(fnet_socket_if_t *sk);                                                     /* Protocol "send timestamp" function. */
+    fnet_uint32_t   (*prot_rcv_timestamp_ns)(fnet_socket_if_t *sk);                                                 /* Protocol "receive timestamp_ns" function. */
+    fnet_uint32_t   (*prot_snd_timestamp_ns)(fnet_socket_if_t *sk);                                                 /* Protocol "send timestamp_ns" function. */
+#endif /*FNET_CFG_CPU_ETH_ADJUSTABLE_TIMER*/
     fnet_ssize_t    (*prot_snd)(fnet_socket_if_t *sk, const fnet_uint8_t *buf, fnet_size_t len, fnet_flag_t flags, const struct fnet_sockaddr *foreign_addr );  /* Protocol "send" function. */
     fnet_return_t   (*prot_shutdown)(fnet_socket_if_t *sk, fnet_sd_flags_t how);                                    /* Protocol "shutdown" function. */
     fnet_return_t   (*prot_setsockopt)(fnet_socket_if_t *sk, fnet_protocol_t level, fnet_socket_options_t optname, const void *optval, fnet_size_t optlen); /* Protocol "setsockopt" function. */

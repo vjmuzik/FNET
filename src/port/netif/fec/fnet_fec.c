@@ -59,10 +59,15 @@ static void _fnet_fec_rx_buf_next( fnet_fec_if_t *fec_if);
 static fnet_return_t _fnet_fec_get_hw_addr(fnet_netif_t *netif, fnet_uint8_t *hw_addr);
 static fnet_return_t _fnet_fec_set_hw_addr(fnet_netif_t *netif, fnet_uint8_t *hw_addr);
 static fnet_return_t _fnet_fec_get_statistics(fnet_netif_t *netif, struct fnet_netif_statistics *statistics);
+#if FNET_CFG_CPU_ETH_ADJUSTABLE_TIMER
+fnet_uint32_t _fnet_fec_get_adjustable_timer(fnet_netif_t *netif);
+void _fnet_fec_set_timestamp(fnet_netif_t *netif, fnet_int32_t timestamp);
+fnet_int32_t _fnet_fec_get_timestamp(fnet_netif_t *netif);
+#endif /*FNET_CFG_CPU_ETH_ADJUSTABLE_TIMER*/
 
-/* FEC rx frame interrup handler. */
-static void fnet_fec_isr_rx_handler_top(void *cookie);
-static void fnet_fec_isr_rx_handler_bottom(void *cookie);
+/* FEC interrup handler. */
+static void fnet_fec_isr_handler_top(void *cookie);
+static void fnet_fec_isr_handler_bottom(void *cookie);
 
 static void fnet_fec_get_mac_addr(fnet_fec_if_t *fec_if, fnet_mac_addr_t *mac_addr);
 
@@ -149,6 +154,11 @@ const fnet_netif_api_t fnet_fec_api =
 #if FNET_CFG_IP6
     .netif_output_ip6 = _fnet_eth_output_ip6,           /* IPv6 Transmit function.*/
 #endif
+#if FNET_CFG_CPU_ETH_ADJUSTABLE_TIMER
+    .netif_get_adjustable_timer = _fnet_fec_get_adjustable_timer,
+    .netif_set_timestamp = _fnet_fec_set_timestamp,
+    .netif_get_timestamp = _fnet_fec_get_timestamp,
+#endif /*FNET_CFG_CPU_ETH_ADJUSTABLE_TIMER*/
     .eth_api = &fnet_fec_eth_api,
 };
 
@@ -202,6 +212,16 @@ static fnet_return_t _fnet_fec_init(fnet_netif_t *netif)
             fec_if->tx_buf_desc[i].length = FNET_HTONS(0U);
 
             fec_if->tx_buf_desc[i].buf_ptr = (fnet_uint8_t *)fnet_htonl(FNET_ALIGN_DIV(fec_if->buf->tx_buf[i], FNET_FEC_TX_BUF_DIV));
+#if FNET_CFG_CPU_ETH_ENHANCED_BUFFER_DESCRIPTOR
+//            fec_if->tx_buf_desc[i].status2 = FNET_HTONL(FNET_FEC_TX_BD_INT);
+//            fec_if->tx_buf_desc[i].hdrlen_proto = FNET_HTONS(0U);
+//            fec_if->tx_buf_desc[i].checksum = FNET_HTONS(0);
+//            fec_if->tx_buf_desc[i].bdu = FNET_HTONS(FNET_FEC_TX_BD_BDU);
+//            fec_if->tx_buf_desc[i].timestamp = FNET_HTONS(0U);
+//            fec_if->tx_buf_desc[i].reserved1 = FNET_HTONS(0U);
+//            fec_if->tx_buf_desc[i].reserved2 = FNET_HTONS(0U);
+            
+#endif
         }
 
         fec_if->tx_buf_desc_num = FNET_FEC_TX_BUF_NUM;
@@ -211,8 +231,17 @@ static fnet_return_t _fnet_fec_init(fnet_netif_t *netif)
         {
             fec_if->rx_buf_desc[i].status = FNET_HTONS(FNET_FEC_RX_BD_E);
             fec_if->rx_buf_desc[i].length = FNET_HTONS(0U);
-
+            
             fec_if->rx_buf_desc[i].buf_ptr = (fnet_uint8_t *)fnet_htonl(FNET_ALIGN_DIV(fec_if->buf->rx_buf[i], FNET_FEC_RX_BUF_DIV));
+#if FNET_CFG_CPU_ETH_ENHANCED_BUFFER_DESCRIPTOR
+            fec_if->rx_buf_desc[i].status2 = FNET_HTONL(FNET_FEC_RX_BD_INT);
+//            fec_if->rx_buf_desc[i].hdrlen_proto = FNET_HTONS(0U);
+//            fec_if->rx_buf_desc[i].checksum = FNET_HTONS(0);
+//            fec_if->rx_buf_desc[i].bdu = FNET_HTONS(FNET_FEC_RX_BD_BDU);
+//            fec_if->rx_buf_desc[i].timestamp = FNET_HTONS(0U);
+//            fec_if->rx_buf_desc[i].reserved1 = FNET_HTONS(0U);
+//            fec_if->rx_buf_desc[i].reserved2 = FNET_HTONS(0U);
+#endif
         }
 
         fec_if->rx_buf_desc_num = FNET_FEC_RX_BUF_NUM;
@@ -224,7 +253,7 @@ static fnet_return_t _fnet_fec_init(fnet_netif_t *netif)
         /*======== END of Ethernet buffers initialisation ========*/
 
         /* Install RX Frame interrupt handler.*/
-        result = _fnet_isr_vector_init(fec_if->vector_number, fnet_fec_isr_rx_handler_top, fnet_fec_isr_rx_handler_bottom, FNET_CFG_CPU_ETH_VECTOR_PRIORITY, netif);
+        result = _fnet_isr_vector_init(fec_if->vector_number, fnet_fec_isr_handler_top, fnet_fec_isr_handler_bottom, FNET_CFG_CPU_ETH_VECTOR_PRIORITY, netif);
 
         if( result == FNET_OK)
         {
@@ -362,6 +391,9 @@ static fnet_return_t _fnet_fec_init(fnet_netif_t *netif)
             /* Enable FEC */
 #if FNET_CFG_CPU_S32R274
             fec_if->reg->ECR = FNET_FEC_ECR_ETHER_EN | FNET_FEC_ECR_SPEED;
+#elif FNET_CFG_CPU_ETH_ADJUSTABLE_TIMER
+            fec_if->reg->EIMR |= FNET_FEC_EIMR_TS_AVAIL | FNET_FEC_EIMR_TS_TIMER;
+            fec_if->reg->ECR = FNET_FEC_ECR_ETHER_EN | FNET_FEC_ECR_EN1588;
 #else
             fec_if->reg->ECR = FNET_FEC_ECR_ETHER_EN;
 #endif
@@ -388,12 +420,67 @@ static fnet_return_t _fnet_fec_init(fnet_netif_t *netif)
 
                 /* Indicate that there have been empty receive buffers produced.*/
                 fec_if->reg->RDAR = FNET_FEC_RDAR_R_DES_ACTIVE;
+#if FNET_CFG_CPU_ETH_ADJUSTABLE_TIMER
+#if FNET_MIMXRT
+                fec_if->reg->ATCR = FNET_FEC_ATCR_RESTART | FNET_FEC_ATCR_RESERVED;
+                /*Period set to one second*/
+                fec_if->reg->ATPER = 0x3B9ACA00U;
+                /*Clock fixed at 25MHz, increment = 40ns*/
+                fec_if->reg->ATINC = (40 & FNET_FEC_ATINC_INC);
+                fec_if->reg->ATCOR = 0;          // no correction
+                fec_if->reg->ATCR = FNET_FEC_ATCR_EN | FNET_FEC_ATCR_PEREN | FNET_FEC_ATCR_RESERVED;
+                
+                netif->netif_send_timestamp_callback = NULL;
+                netif->netif_send_timestamp_callback_cookie = NULL;
+#endif /*FNET_MIMXRT*/
+#endif /*FNET_CFG_CPU_ETH_ADJUSTABLE_TIMER*/
             }
         }
     }
 
     return result;
 }
+
+#if FNET_CFG_CPU_ETH_ADJUSTABLE_TIMER
+fnet_uint32_t _fnet_fec_get_adjustable_timer(fnet_netif_t *netif)
+{
+    fnet_fec_if_t   *fec_if;
+    fnet_eth_if_t   *eth_if =  (fnet_eth_if_t *)(netif->netif_prv);
+
+    fec_if = (fnet_fec_if_t *)(eth_if->eth_prv);
+    asm("dsb");
+    fec_if->reg->ATCR |= FNET_FEC_ATCR_CAPTURE;
+    while(fec_if->reg->ATCR & FNET_FEC_ATCR_CAPTURE) {}
+    return fec_if->reg->ATVR;
+}
+
+void _fnet_fec_ts_avail(fnet_netif_t *netif)
+    {
+        fnet_fec_if_t   *fec_if;
+        fnet_eth_if_t   *eth_if =  (fnet_eth_if_t *)(netif->netif_prv);
+
+        fec_if = (fnet_fec_if_t *)(eth_if->eth_prv);
+        if(netif->netif_send_timestamp_callback){
+            netif->netif_send_timestamp_callback(fec_if->timestamp, fec_if->reg->ATSTMP, netif->netif_send_timestamp_callback_cookie);
+        }
+    }
+
+void _fnet_fec_set_timestamp(fnet_netif_t *netif, fnet_int32_t timestamp){
+    fnet_fec_if_t   *fec_if;
+    fnet_eth_if_t   *eth_if =  (fnet_eth_if_t *)(netif->netif_prv);
+
+    fec_if = (fnet_fec_if_t *)(eth_if->eth_prv);
+    fec_if->timestamp = timestamp;
+}
+
+fnet_int32_t _fnet_fec_get_timestamp(fnet_netif_t *netif){
+    fnet_fec_if_t   *fec_if;
+    fnet_eth_if_t   *eth_if =  (fnet_eth_if_t *)(netif->netif_prv);
+
+    fec_if = (fnet_fec_if_t *)(eth_if->eth_prv);
+    return fec_if->timestamp;
+}
+#endif
 
 /************************************************************************
 * DESCRIPTION: FEC/ENET Ethernet module release.
@@ -455,7 +542,6 @@ static void _fnet_fec_input(fnet_netif_t *netif)
 #if !FNET_CFG_CPU_ETH_MIB
         fec_if->statistics.rx_packet++;
 #endif
-
         /* If !(buffer is last in the frame) */
         if ((fec_if->rx_buf_desc_cur->status & FNET_HTONS(FNET_FEC_RX_BD_L)) == 0u)
         {
@@ -480,9 +566,13 @@ static void _fnet_fec_input(fnet_netif_t *netif)
                 goto NEXT_FRAME;
             }
 
+#if FNET_CFG_CPU_ETH_ADJUSTABLE_TIMER
+            /* Ethernet timestamping input.*/
+            _fnet_eth_input( netif, (fnet_uint8_t *)fnet_ntohl((fnet_uint32_t)fec_if->rx_buf_desc_cur->buf_ptr), fnet_ntohs(fec_if->rx_buf_desc_cur->length), fec_if->timestamp, fnet_ntohl(fec_if->rx_buf_desc_cur->timestamp));
+#else
             /* Ethernet input.*/
             _fnet_eth_input( netif, (fnet_uint8_t *)fnet_ntohl((fnet_uint32_t)fec_if->rx_buf_desc_cur->buf_ptr), fnet_ntohs(fec_if->rx_buf_desc_cur->length));
-
+#endif
         }
     NEXT_FRAME:
         _fnet_fec_rx_buf_next(fec_if);
@@ -497,6 +587,9 @@ static void _fnet_fec_rx_buf_next( fnet_fec_if_t *fec_if)
     /* Mark the buffer as empty.*/
     fec_if->rx_buf_desc_cur->status &= FNET_HTONS(FNET_FEC_RX_BD_W);
     fec_if->rx_buf_desc_cur->status |= FNET_HTONS(FNET_FEC_RX_BD_E);
+    #if FNET_CFG_CPU_ETH_ENHANCED_BUFFER_DESCRIPTOR
+//            fec_if->rx_buf_desc_cur->bdu = FNET_HTONS(0U);
+    #endif
 
     /* Update pointer to next entry.*/
     if ((fec_if->rx_buf_desc_cur->status & FNET_HTONS(FNET_FEC_RX_BD_W)) != 0u)
@@ -614,7 +707,17 @@ void fnet_fec_output(fnet_netif_t *netif, fnet_netbuf_t *nb)
 
         fec_if->tx_buf_desc_cur->length = fnet_htons((fnet_uint16_t)(nb->total_length));
         fec_if->tx_buf_desc_cur->status |= FNET_HTONS(FNET_FEC_TX_BD_R); /* Set Frame ready for transmit.*/
-
+#if FNET_CFG_CPU_ETH_ENHANCED_BUFFER_DESCRIPTOR
+//        fec_if->tx_buf_desc_cur->bdu = FNET_HTONS(0U);
+#endif
+        
+#if FNET_CFG_CPU_ETH_ADJUSTABLE_TIMER
+        if((nb->flags & FNET_NETBUF_FLAG_TIMESTAMP) != 0)
+        {
+            fec_if->tx_buf_desc_cur->status2 |= FNET_HTONL(FNET_FEC_TX_BD_TS);
+        }
+#endif /*FNET_CFG_CPU_ETH_ADJUSTABLE_TIMER*/
+        
         /* Ensure all memory accesses are completed, before DMA start. */
         FNET_CPU_DATA_MEMORY_BARRIER;
 
@@ -763,29 +866,49 @@ static fnet_return_t _fnet_fec_get_statistics(fnet_netif_t *netif, struct fnet_n
 }
 
 /************************************************************************
-* DESCRIPTION: Top Ethernet receive frame interrupt handler.
+* DESCRIPTION: Top Ethernet interrupt handler.
 *              Clear event flag
 *************************************************************************/
-static void fnet_fec_isr_rx_handler_top (void *cookie)
+static void fnet_fec_isr_handler_top (void *cookie)
 {
     fnet_fec_if_t *fec_if = (fnet_fec_if_t *)((fnet_eth_if_t *)(((fnet_netif_t *)cookie)->netif_prv))->eth_prv;
 
     /* Clear FEC RX Event from the Event Register (by writing 1).*/
-    fec_if->reg->EIR = FNET_FEC_EIR_RXF;
+    if((fec_if->reg->EIR & FNET_FEC_EIR_RXF) != 0){  /*Hold to process later*/
+        fec_if->isr_holder = FNET_FEC_EIR_RXF;  /*Hold interrupt value*/
+        fec_if->reg->EIR = FNET_FEC_EIR_RXF;    /*Clear interrupt*/
+    }
+#if FNET_CFG_CPU_ETH_ADJUSTABLE_TIMER
+    else if((fec_if->reg->EIR & FNET_FEC_EIR_TS_AVAIL) != 0){  /*Process short interrupt now*/
+        fec_if->reg->EIR = FNET_FEC_EIR_TS_AVAIL;    /*Clear interrupt*/
+        _fnet_fec_ts_avail((fnet_netif_t *)cookie);
+    }
+    else if((fec_if->reg->EIR & FNET_FEC_EIR_TS_TIMER) != 0){  /*Process short interrupt now*/
+        fec_if->reg->EIR = FNET_FEC_EIR_TS_TIMER;    /*Clear interrupt*/
+        fec_if->timestamp++;
+    }
+#endif
+    else{
+        fec_if->reg->EIR = 0xFFFFFFFFU;   /* Clear other interrupts we aren't interested in. */
+    }
 }
 
 /************************************************************************
-* DESCRIPTION: This function implements the Ethernet receive
-*              frame interrupt handler.
+* DESCRIPTION: This function implements the Ethernet  interrupt handler.
 *************************************************************************/
-static void fnet_fec_isr_rx_handler_bottom (void *cookie)
+static void fnet_fec_isr_handler_bottom (void *cookie)
 {
     fnet_netif_t *netif = (fnet_netif_t *)cookie;
+    fnet_fec_if_t *fec_if = (fnet_fec_if_t *)((fnet_eth_if_t *)(((fnet_netif_t *)cookie)->netif_prv))->eth_prv;
+    
 
     fnet_isr_lock();
 
-    _fnet_fec_input(netif);
-
+    if((fec_if->isr_holder & FNET_FEC_EIR_RXF) != 0){
+        fec_if->isr_holder &= ~FNET_FEC_EIR_RXF;  /*Clear held value*/
+        _fnet_fec_input(netif);
+    }
+    
     fnet_isr_unlock();
 }
 
@@ -1027,3 +1150,4 @@ void fnet_fec_poll(fnet_netif_desc_t netif_desc)
 }
 
 #endif /* (FNET_MCF || FNET_MK || FNET_MPC || FNET_MIMXRT) && (FNET_CFG_CPU_ETH0 ||FNET_CFG_CPU_ETH1) */
+
