@@ -200,7 +200,7 @@ static void _fnet_shell_poll( void *shell_if_p )
 
                 if(argc)
                 {
-                    const fnet_shell_command_t *cur_command = fnet_shell_get_command_by_name(shell_if, argv[0]);
+                    const fnet_shell_command_t *cur_command = fnet_shell_get_command_by_name(shell_if, argv[0]); //TBD NULL if no command found //DM
 
                     if(cur_command)
                     {
