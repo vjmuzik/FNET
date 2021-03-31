@@ -599,7 +599,7 @@ static fnet_bool_t _fnet_dns_cmp_name(const char *rr_name, const char *name)
     fnet_uint32_t       name_length = fnet_strlen(name);
     fnet_uint32_t       rr_name_length = fnet_strlen(rr_name);
 
-    Serial.pr
+    FNET_DEBUG_DNS((char *)name);
 
     if((name_length != 0) && ((name_length + 1 /* first length byte */)  == rr_name_length) )
     {
@@ -620,7 +620,9 @@ static fnet_bool_t _fnet_dns_cmp_name(const char *rr_name, const char *name)
     }
 
     if(i == name_length)
-    {   Serial.println("Result: FNET_TRUE");
+    {  
+        FNET_DEBUG_DNS("Result: FNET_TRUE"; 
+        
         result = FNET_TRUE;
     }
     else
