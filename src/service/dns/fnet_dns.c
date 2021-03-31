@@ -442,8 +442,10 @@ static void _fnet_dns_poll( void *fnet_dns_if_p )
                             {
                             	rr_header = (const fnet_dns_rr_header_t *)ptr;
 
-                                if(_fnet_dns_cmp_name(rr_name, dns_if->host_name) == FNET_TRUE)
-                                {
+                                // RoSchmi
+
+                                //if(_fnet_dns_cmp_name(rr_name, dns_if->host_name) == FNET_TRUE)
+                                //{
                                    /* Check Question Type, Class and Resource Data Length. */
                                     if ( (rr_header->type ==  dns_if->dns_type) &&
                                         (rr_header->rr_class == FNET_HTONS(FNET_DNS_HEADER_CLASS_IN)))
@@ -468,7 +470,7 @@ static void _fnet_dns_poll( void *fnet_dns_if_p )
                                         }
                                     }
 
-                                }
+                                //}
 
                                 ptr += sizeof(fnet_dns_rr_header_t) + fnet_htons(rr_header->rdlength); /* Next answer */
 
