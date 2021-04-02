@@ -621,8 +621,7 @@ static fnet_bool_t _fnet_dns_cmp_name(const char *rr_name, const char *name)
 
     if(i == name_length)
     {  
-        FNET_DEBUG_DNS("Result: FNET_TRUE"); 
-        
+        //FNET_DEBUG_DNS("Result: FNET_TRUE");     
         result = FNET_TRUE;
     }
     else
