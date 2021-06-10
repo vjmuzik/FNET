@@ -443,36 +443,30 @@ static void _fnet_dns_poll( void *fnet_dns_if_p )
                             if(ptr)
                             {
                             	rr_header = (const fnet_dns_rr_header_t *)ptr;
-
-                                // RoSchmi
-
-                                //if(_fnet_dns_cmp_name(rr_name, dns_if->host_name) == FNET_TRUE)
-                                //{
-                                   /* Check Question Type, Class and Resource Data Length. */
-                                    if ( (rr_header->type ==  dns_if->dns_type) &&
-                                        (rr_header->rr_class == FNET_HTONS(FNET_DNS_HEADER_CLASS_IN)))
+                                
+                                /* Check Question Type, Class and Resource Data Length. */
+                                if ( (rr_header->type ==  dns_if->dns_type) &&
+                                    (rr_header->rr_class == FNET_HTONS(FNET_DNS_HEADER_CLASS_IN)))
+                                {
+                                    /* Resolved.*/
+                                    if(rr_header->type == FNET_HTONS(FNET_DNS_TYPE_A))
                                     {
-                                        /* Resolved.*/
-                                        if(rr_header->type == FNET_HTONS(FNET_DNS_TYPE_A))
-                                        {
-                                            dns_if->resolved_addr[dns_if->addr_number].resolved_addr.sa_family = AF_INET;
-                                            ((struct fnet_sockaddr_in *)(&dns_if->resolved_addr[dns_if->addr_number].resolved_addr))->sin_addr.s_addr = *((fnet_ip4_addr_t *)(ptr+sizeof(fnet_dns_rr_header_t)));
-                                        }
-                                        else /* AF_INET6 */
-                                        {
-                                            dns_if->resolved_addr[dns_if->addr_number].resolved_addr.sa_family = AF_INET6;
-                                            FNET_IP6_ADDR_COPY((fnet_ip6_addr_t *)(ptr+sizeof(fnet_dns_rr_header_t)), &((struct fnet_sockaddr_in6 *)(&dns_if->resolved_addr[dns_if->addr_number].resolved_addr))->sin6_addr.s6_addr);
-                                        }
-                                        dns_if->resolved_addr[dns_if->addr_number].resolved_addr_ttl = rr_header->ttl;
-                                    
-                                        dns_if->addr_number++;
-                                        if(dns_if->addr_number >= (FNET_CFG_DNS_RESOLVED_ADDR_MAX)) /* Check address number limit */
-                                        {
-                                            break;
-                                        }
+                                        dns_if->resolved_addr[dns_if->addr_number].resolved_addr.sa_family = AF_INET;
+                                        ((struct fnet_sockaddr_in *)(&dns_if->resolved_addr[dns_if->addr_number].resolved_addr))->sin_addr.s_addr = *((fnet_ip4_addr_t *)(ptr+sizeof(fnet_dns_rr_header_t)));
                                     }
-
-                                //}
+                                    else /* AF_INET6 */
+                                    {
+                                        dns_if->resolved_addr[dns_if->addr_number].resolved_addr.sa_family = AF_INET6;
+                                            FNET_IP6_ADDR_COPY((fnet_ip6_addr_t *)(ptr+sizeof(fnet_dns_rr_header_t)), &((struct fnet_sockaddr_in6 *)(&dns_if->resolved_addr[dns_if->addr_number].resolved_addr))->sin6_addr.s6_addr);
+                                    }
+                                    dns_if->resolved_addr[dns_if->addr_number].resolved_addr_ttl = rr_header->ttl;
+                                    
+                                    dns_if->addr_number++;
+                                    if(dns_if->addr_number >= (FNET_CFG_DNS_RESOLVED_ADDR_MAX)) /* Check address number limit */
+                                    {
+                                        break;
+                                    }
+                                }
 
                                 ptr += sizeof(fnet_dns_rr_header_t) + fnet_htons(rr_header->rdlength); /* Next answer */
 
