@@ -21,8 +21,6 @@
 *  DNS Client/Resolver implementation.
 *
 ***************************************************************************/
-
-
 #include "fnet.h"
 
 #if FNET_CFG_DNS
@@ -612,7 +610,6 @@ static fnet_bool_t _fnet_dns_cmp_name(const char *rr_name, const char *name)
             }
         }
     }
-
     if(i == name_length)
     {  
         //FNET_DEBUG_DNS("Result: FNET_TRUE");     
